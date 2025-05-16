@@ -1,6 +1,8 @@
 import scipy.io
 import pandas as pd
 import numpy as np
+import saida
+import skfuzzy as fuzz
 from scipy import sparse
 
 # Parametros ajustaveis manualmente
@@ -49,7 +51,10 @@ for i in range(nfp):
     q[i] = np.random.rand()
     
 #Gerar população inicial
+saida.saida()
+
 pop = []
+
 for z in range(tamPop):
     nfpSort = nfp
     cs = np.empty((nin, nfpSort))
