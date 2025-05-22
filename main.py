@@ -5,6 +5,8 @@ import saida
 import skfuzzy as fuzz
 from scipy import sparse
 import time
+import matplotlib.pyplot as plt
+
 start_time = time.time() 
 
 # Parametros ajustaveis manualmente
@@ -13,7 +15,7 @@ alfa=0.01         #Alfa - parametro de atualizacao
 nepoca=5       #Numero de epocas de treinamento dos pesos para cada geração da PG
 
 #Parametros Programacao Genetica
-tamPop=50
+tamPop=2
 numGeracoes=100
 taxaCruza=0.7
 taxaMuta=0.08
@@ -34,6 +36,8 @@ xt = xt[:nptTr]
 
 ydv=yt[nptTr-1:]
 ydt=yt[:nptTr]
+
+npt=nptTr
 
 xmin=xt.min(axis=0)
 xmax=xt.max(axis=0)
@@ -84,10 +88,30 @@ nfp = pop[melhorindv]['nfps']
 auxsize = tamPop
 novapop = pop
 
+#Funcao de pertinencia gaussiana
+xval = np.linspace(xmin[0], xmax[0], npt)
+print(xval)
 
+xval[0] = xval[0]/10
+xval[1] = xval[1]/10
 
+plt.figure(2)
+for j in range(nfp):
+    for i in range(nin):
+        w = fuzz.gaussmf(xval, c[i, j], s[i, j])
+        ax = plt.subplot(2, nin, i + 1)
+        ax.plot(xval, w, 'k')
+        ax.grid(True)
+        ax.set_title('Membership Functions - Initial')
+        ax.set_xlabel(f'$X{{{i + 1}}}$')  # LaTeX-style subscript
+        ax.set_ylabel('Membership')
+        ax.set_xlim([xmin[i], xmax[i]])
 
+plt.tight_layout()
+plt.show()
 
+ytst = saida.saida(xt,c,s,p,q,nfp)
+yvst = saida.saida(xv,c,s,p,q,nfp)
 
 end_time = time.time() 
 execution_time = end_time - start_time 
