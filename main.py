@@ -95,23 +95,49 @@ print(xval)
 xval[0] = xval[0]/10
 xval[1] = xval[1]/10
 
-plt.figure(2)
-for j in range(nfp):
-    for i in range(nin):
-        w = fuzz.gaussmf(xval, c[i, j], s[i, j])
-        ax = plt.subplot(2, nin, i + 1)
-        ax.plot(xval, w, 'k')
-        ax.grid(True)
-        ax.set_title('Membership Functions - Initial')
-        ax.set_xlabel(f'$X{{{i + 1}}}$')  # LaTeX-style subscript
-        ax.set_ylabel('Membership')
-        ax.set_xlim([xmin[i], xmax[i]])
+# plt.figure(2)
+# for j in range(nfp):
+#     for i in range(nin):
+#         w = fuzz.gaussmf(xval, c[i, j], s[i, j])
+#         ax = plt.subplot(2, nin, i + 1)
+#         ax.plot(xval, w, 'k')
+#         ax.grid(True)
+#         ax.set_title('Membership Functions - Initial')
+#         ax.set_xlabel(f'$X{{{i + 1}}}$')  # LaTeX-style subscript
+#         ax.set_ylabel('Membership')
+#         ax.set_xlim([xmin[i], xmax[i]])
 
-plt.tight_layout()
-plt.show()
+# plt.tight_layout()
+# plt.show()
 
 ytst = saida.saida(xt,c,s,p,q,nfp)
 yvst = saida.saida(xv,c,s,p,q,nfp)
+
+erro = []
+yst = ytst
+
+for i in range(numGeracoes):
+    print('Geração ', i)
+
+    erro[i] = (0.5 * np.sum((yst - ydt)**2)) / npt
+    dyjdqj = 1
+
+    for j in range(nepoca):
+        for k in range(npt):
+            ys, w, y, b = saida(xt[k,:], c, s, p, q, nfp)
+            dedys = (ys - ydt[k])
+            for l in range(nfp):
+                dysdyj = w[l] /b
+                dysdwj = (y[l] - ys) /b
+                for m in range(nin):
+                    dyjdpj = xt[k, m]
+
+                    p[m, j] -= ((alfa/10.0)*dedys*dysdyj*dyjdpj)
+
+                q[j] -= ((alfa/10.0)*dedys*dysdyj*dyjdqj)
+
+    # Finalização das epocas - Linha: 199
+    pop
 
 end_time = time.time() 
 execution_time = end_time - start_time 

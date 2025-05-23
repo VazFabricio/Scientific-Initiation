@@ -24,4 +24,4 @@ def saida(x, c, s, p, q, m):
             b = 1
         ys[i] = a/b
 
-        return ys
+        return ys, w, y, b
