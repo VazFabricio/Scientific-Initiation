@@ -2,11 +2,13 @@ import numpy as np
 import torneio
 import cruzamento
 import mutacao
+import copy
 
 def gerarnovapop(pop, melhorindvidx, tamPop, taxaCruza, taxaMuta, xmax, xmin):
+    
     melhorindv = pop[melhorindvidx]
 
-    nova_pop = [melhorindv]
+    nova_pop = [copy.deepcopy(melhorindv)]
 
     while len(nova_pop) < tamPop:
         z = len(nova_pop)
@@ -29,16 +31,17 @@ def gerarnovapop(pop, melhorindvidx, tamPop, taxaCruza, taxaMuta, xmax, xmin):
             nova_pop.append(filho)
 
             if len(nova_pop) < tamPop and np.random.rand() < taxaMuta:
-                filho2 = mutacao.mutacao(filho, xmax, xmin)
+                filho2 = mutacao.mutacao(copy.deepcopy(filho), xmax, xmin)
                 nova_pop.append(filho2)
         else:
-            ind1 = pop[parent1]
+
+            ind1 = copy.deepcopy(pop[parent1])
             if np.random.rand() < taxaMuta:
                 ind1 = mutacao.mutacao(ind1, xmax, xmin)
             nova_pop.append(ind1)
 
             if len(nova_pop) < tamPop:
-                ind2 = pop[parent2]
+                ind2 = copy.deepcopy(pop[parent2])
                 if np.random.rand() < taxaMuta:
                     ind2 = mutacao.mutacao(ind2, xmax, xmin)
                 nova_pop.append(ind2)

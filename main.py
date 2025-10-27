@@ -16,11 +16,11 @@ alfa=0.01         #Alfa - parametro de atualizacao
 nepoca=5       #Numero de epocas de treinamento dos pesos para cada geração da PG
 
 #Parametros Programacao Genetica
-tamPop=15
+tamPop=50
 numGeracoes=25
 taxaCruza=0.7
-taxaMuta=0.8
-nfpMax=7; # maximo de funções de pertinência geradas em cada indivíduo
+taxaMuta=0.08
+nfpMax=7; 
 
 _xt_temp = np.loadtxt('xt.csv', delimiter=',', skiprows=1)
 xt = _xt_temp[:, 1:] 
@@ -51,7 +51,6 @@ delta=(xmax-xmin) / (nfp-1)
 
 aux = sparse.csr_matrix(xt)
 
-#Calculo dos parametros
 p = np.empty((nin, nfp))
 q = np.empty(nfp)
 for i in range(nfp):
@@ -59,13 +58,8 @@ for i in range(nfp):
         p[j, i] = np.random.rand()
 
     q[i] = np.random.rand()
-    
-# #Gerar população inicial
-pop = []
 
-# #Criar p e q individual: 
-p_ind = np.random.rand(nin, nfp)
-q_ind = np.random.rand(nfp)
+pop = []
 
 for z in range(tamPop):
     nfpSort = nfp
@@ -85,11 +79,10 @@ for z in range(tamPop):
         'nfps': nfpSort,
         'cs': cs,
         'ss': ss,
-        'p': p_ind, # Adicionando p ao indivíduo
-        'q': q_ind  # Adicionando q ao indivíduo
+        'p': p_ind,
+        'q': q_ind
     }
     
-    #Agora p e q vão para a função de saida
     individuo['saida'], _, _, _ = saida.saida(xt, individuo['cs'], individuo['ss'], individuo['p'], individuo['q'], individuo['nfps'])
     individuo['fitness'] = (0.5 * np.sum((individuo['saida'] - ydt)**2)) / npt
     pop.append(individuo)
@@ -113,7 +106,7 @@ xval = np.linspace(xmin[0], xmax[0], npt)
 xval[0] = xval[0]/10
 xval[1] = xval[1]/10
 
-fig1, axes = plt.subplots(2, nin, figsize=(4 * nin, 6))
+# fig1, axes = plt.subplots(2, nin, figsize=(4 * nin, 6))
 
 # Membership Functions - Initial (top row)
 # for j in range(nfp):
@@ -139,30 +132,11 @@ for i in range(numGeracoes):
 
     erro.append((0.5 * np.sum((yst - ydt)**2)) / npt)
     
-    # Gradiente agora vai ser removido
-    #dyjdqj = 1
-
-    # for _ in range(nepoca):
-    #     for k in range(npt):
-    #         ys, w, y, b = saida.saida(xt[k, :], c, s, p, q, nfp)
-    #         dedys = ys - ydt[k]
-
-    #         for j in range(nfp):
-    #             dysdyj = w[j] / b
-    #             dysdwj = (y[j] - ys) / b
-
-    #             for m in range(nin):
-    #                 dyjdpj = xt[k, m]
-    #                 p[m, j] -= (alfa / 10.0) * dedys * dysdyj * dyjdpj
-
-    #            q[j] -= (alfa / 10.0) * dedys * dysdyj * dyjdqj
 
     pop = gerarnovapop.gerarnovapop(pop, melhorindv, tamPop, taxaCruza, taxaMuta, xmax, xmin)
 
-    # Avalia fitness dos indivíduos
     for z in range(tamPop):
-        # print(pop[z])
-        #Novamente colocando p e q na func saída
+
         pop[z]['saida'] = saida.saida(xt, pop[z]['cs'], pop[z]['ss'], pop[z]['p'], pop[z]['q'], pop[z]['nfps'])[0]
         pop[z]['fitness'] = (0.5 * np.sum((pop[z]['saida'] - ydt) ** 2)) / npt
         
@@ -175,13 +149,15 @@ for i in range(numGeracoes):
     c = pop[melhorindv]['cs']
     s = pop[melhorindv]['ss']
     nfp = pop[melhorindv]['nfps']
+
+    p = pop[melhorindv]['p']
+    q = pop[melhorindv]['q']
+    
     yst = saida.saida(xt, c, s, p, q, nfp)[0]
-    print(pop[melhorindv]['q'])
 
 erro.append((0.5 * np.sum((yst - ydt) ** 2)) / npt)
 yst = saida.saida(xt, c, s, p, q, nfp)[0] 
 ysv = saida.saida(xv, c, s, p, q, nfp)[0] 
-
 
 end_time = time.time() 
 execution_time = end_time - start_time 
