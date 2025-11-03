@@ -1,254 +1,283 @@
-import scipy.io
-import pandas as pd
+# treinamento4_py.py
+import time
 import numpy as np
+import matplotlib.pyplot as plt
+from scipy import sparse
+# não uso skfuzzy aqui para evitar confusão de ordem de parâmetros da gaussmf
+# se quiser usar skfuzzy, atente-se que a assinatura é (x, mean, sigma)
 import saida
 import gerarnovapop
-import skfuzzy as fuzz
-from scipy import sparse
-import time
-import matplotlib.pyplot as plt
 
-start_time = time.time() 
+start_time = time.time()
 
-# Parametros ajustaveis manualmente
-nfp=5             #Funcoes de pertinencia
-alfa=0.01         #Alfa - parametro de atualizacao
-nepoca=5       #Numero de epocas de treinamento dos pesos para cada geração da PG
+# -------------------------
+# Parâmetros ajustáveis
+# -------------------------
+nfp = 5             # Funções de pertinência
+alfa = 0.01         # taxa de aprendizado (alfa)
+nepoca = 5          # número de épocas de atualização dos pesos por geração
 
-#Parametros Programacao Genetica
-tamPop=2
-numGeracoes=2
-taxaCruza=0.7
-taxaMuta=0.08
-nfpMax=7; # maximo de funções de pertinência geradas em cada indivíduo
+# Parâmetros Programação Genética
+tamPop = 5
+numGeracoes = 5
+taxaCruza = 0.7
+taxaMuta = 0.08
+nfpMax = 7          # máximo de FPs geradas por indivíduo
 
+# -------------------------
+# Carregar dados (exemplo: csvs que você gerou)
+# -------------------------
+# supondo xt.csv e yt.csv conforme você já vinha usando (sem header em dados numéricos)
+# Ajuste a leitura conforme seu formato real.
 _xt_temp = np.loadtxt('xt.csv', delimiter=',', skiprows=1)
-xt = _xt_temp[:, 1:] 
+xt = _xt_temp[:, 1:]   # se o csv tiver um índice na 1ª coluna, como você fez
 _yt_temp = np.loadtxt('yt.csv', delimiter=',', skiprows=1)
 yt = _yt_temp[:, 1:]
 
-npt, nin = (xt).shape
+# garantir shapes 1D para yt
+yt = yt.ravel()
 
-nptTr = round(npt*0.6)
-nptVal = round(npt*0.2)
+# -------------------------
+# Partição de treino/validação
+# -------------------------
+npt_total, nin = xt.shape
+nptTr = int(round(npt_total * 0.6))
+# nptVal = int(round(npt_total * 0.2))  # não usado no MATLAB original: validação é o restante
 
-xv = xt[nptTr-1:]
-xt = xt[:nptTr]
+x_train = xt[:nptTr, :]
+x_val = xt[nptTr:npt_total, :]
 
-ydv=yt[nptTr-1:]
-ydt=yt[:nptTr]
+y_train = yt[:nptTr]
+y_val = yt[nptTr:npt_total]
 
-npt=nptTr
+npt = nptTr  # número de pontos de treino (equivalente MATLAB)
 
-xmin=xt.min(axis=0)
-xmax=xt.max(axis=0)
+xmin = x_train.min(axis=0)
+xmax = x_train.max(axis=0)
+delta = (xmax - xmin) / (nfp - 1)
 
-delta=(xmax-xmin) / (nfp-1)
+aux = sparse.csr_matrix(x_train)
 
-aux = sparse.csr_matrix(xt)
+# -------------------------
+# Inicialização de parâmetros p e q
+# p: (nin, nfp), q: (nfp,)
+# -------------------------
+rng = np.random.default_rng()
+p = rng.random((nin, nfp))
+q = rng.random(nfp)
 
-#Calculo dos parametros
-p = np.empty((nin, nfp))
-q = np.empty(nfp)
-for i in range(nfp):
-    for j in range(nin):
-        p[j, i] = np.random.rand()
+# -------------------------
+# Função gaussiana (mesma forma do MATLAB gaussmf com [sigma, mean])
+# vamos usar mean=c e sigma=s
+# -------------------------
+def gaussmf(x, mean, sigma):
+    # evitar divisão por zero
+    sigma = np.maximum(sigma, 1e-12)
+    return np.exp(-((x - mean) ** 2) / (2.0 * sigma ** 2))
 
-    q[i] = np.random.rand()
-    
-# #Gerar população inicial
+# -------------------------
+# Gera população inicial
+# cada indivíduo: dict com 'nfps', 'cs' (centros), 'ss' (sigmas), 'saida', 'fitness'
+# -------------------------
 pop = []
-
 for z in range(tamPop):
-    nfpSort = nfp
+    nfpSort = nfp  # mantive a lógica MATLAB (poderia variar até nfpMax)
     cs = np.empty((nin, nfpSort))
     ss = np.empty((nin, nfpSort))
-    for i in range(nfpSort):
-        for j in range(nin):
-            cs[j, i] = xmin[j] + np.random.rand()*(xmax[j]-xmin[j])
-            ss[j, i] = np.random.rand()*(xmax[j]-xmin[j])
+    for j in range(nfpSort):
+        for i in range(nin):
+            cs[i, j] = xmin[i] + rng.random() * (xmax[i] - xmin[i])
+            ss[i, j] = rng.random() * (xmax[i] - xmin[i])  # sigma relativo ao range
 
-    individuo = {
-        'nfps': nfpSort,
-        'cs': cs,
-        'ss': ss
-    }
-    individuo['saida'], _, _, _ = saida.saida(xt, individuo['cs'], individuo['ss'], p, q, individuo['nfps'])
-    individuo['fitness'] = (0.5 * np.sum((individuo['saida'] - ydt)**2)) / npt
-    pop.append(individuo)
-
-    if z == 0:
-        melhorindv = z
+    indiv = {'nfps': nfpSort, 'cs': cs, 'ss': ss}
+    # chamada à sua função saida - assumo que retorna (saida_vector, w, y, b) ou similar
+    # ajustar se a interface real for diferente
+    saida_full = saida.saida(x_train, cs, ss, p, q, nfpSort)
+    # pegar primeiro elemento (vetor de saídas)
+    if isinstance(saida_full, tuple) or isinstance(saida_full, list):
+        y_pred = np.asarray(saida_full[0]).ravel()
     else:
-        if individuo['fitness'] < pop[melhorindv]['fitness']:
-            melhorindv = z
-    
-c = pop[melhorindv]['cs']
-s = pop[melhorindv]['ss']
-nfp = pop[melhorindv]['nfps']
-auxsize = tamPop
-novapop = pop
+        y_pred = np.asarray(saida_full).ravel()
+    indiv['saida'] = y_pred
+    indiv['fitness'] = (0.5 * np.sum((indiv['saida'] - y_train) ** 2)) / npt
+    pop.append(indiv)
 
-#Funcao de pertinencia gaussiana
+# identifica melhor indivíduo
+melhorindv = int(np.argmin([ind['fitness'] for ind in pop]))
+
+# inicializar variáveis com melhor indivíduo
+c = pop[melhorindv]['cs'].copy()
+s = pop[melhorindv]['ss'].copy()
+nfp = pop[melhorindv]['nfps']
+novapop = pop.copy()
+
+# -------------------------
+# Preparar xval para plot das MF (apenas para a primeira variável como no MATLAB)
+# -------------------------
 xval = np.linspace(xmin[0], xmax[0], npt)
 
-xval[0] = xval[0]/10
-xval[1] = xval[1]/10
-
-fig1, axes = plt.subplots(2, nin, figsize=(4 * nin, 6))
-
-# Membership Functions - Initial (top row)
+# plot - MF iniciais
+fig_mf_init, axes = plt.subplots(2, max(1, nin), figsize=(4 * max(1, nin), 6))
 for j in range(nfp):
     for i in range(nin):
-        w_init = fuzz.gaussmf(xval, c[i, j], s[i, j])
+        # mean = c[i,j], sigma = s[i,j]
+        w = gaussmf(xval, c[i, j], s[i, j])
         ax = axes[0, i] if nin > 1 else axes
-        ax.plot(xval, w_init, 'gray', linestyle='--', label='Initial' if j == 0 else "")
-        ax.set_title(f'Membership Functions - Initial (X{i+1})')
+        ax.plot(xval, w, color='black', linewidth=0.8)
+        ax.set_title('Membership Functions - Initial' if j == 0 else '')
         ax.set_xlabel(f'X_{i+1}')
         ax.set_ylabel('Membership')
         ax.set_xlim(xmin[i], xmax[i])
         ax.grid(True)
 
+# -------------------------
+# Saída inicial sem treinamento
+# -------------------------
+ytst_full = saida.saida(x_train, c, s, p, q, nfp)
+ytst = np.asarray(ytst_full[0] if isinstance(ytst_full, (list,tuple)) else ytst_full).ravel()
+yvst_full = saida.saida(x_val, c, s, p, q, nfp)
+yvst = np.asarray(yvst_full[0] if isinstance(yvst_full, (list,tuple)) else yvst_full).ravel()
 
-ytst, _, _, _ = saida.saida(xt,c,s,p,q,nfp)
-yvst, _, _, _ = saida.saida(xv,c,s,p,q,nfp)
-
+# -------------------------
+# Treinamento (laço de gerações + atualizações de p,q por época)
+# -------------------------
 erro = []
-yst = ytst
+yst = ytst.copy()
 
-for i in range(numGeracoes):
-    print('Geração ', i + 1)
+for gen in range(numGeracoes):
+    print(f'Geração {gen+1}')
+    erro.append((0.5 * np.sum((yst - y_train) ** 2)) / npt)
+    dyjdqj = 1.0
 
-    erro.append((0.5 * np.sum((yst - ydt)**2)) / npt)
-    dyjdqj = 1
-
+    # treinamento dos pesos p e q (gradient-like) conforme MATLAB
     for _ in range(nepoca):
         for k in range(npt):
-            ys, w, y, b = saida.saida(xt[k, :], c, s, p, q, nfp)
-            dedys = ys - ydt[k]
+            sample = x_train[k, :]
+            # chamar saida para 1 amostra - adaptar se assinatura difere
+            ys_full = saida.saida(sample, c, s, p, q, nfp)
+            # supondo que ys_full devolve (ys_scalar, w_vector, y_vector, b_scalar)
+            if isinstance(ys_full, (list, tuple)):
+                ys = float(np.asarray(ys_full[0]).ravel())
+                w = np.asarray(ys_full[1]).ravel()
+                y_vec = np.asarray(ys_full[2])
+                b = float(ys_full[3])
+            else:
+                # se só retorna escalar
+                ys = float(np.asarray(ys_full).ravel())
+                # sem w, y, b disponíveis -> não podemos atualizar corretamente
+                raise RuntimeError("saida.saida não retornou (ys, w, y, b). Ajuste a função 'saida'.")
+
+            dedys = ys - float(y_train[k])  # erro escalar
 
             for j in range(nfp):
                 dysdyj = w[j] / b
-                dysdwj = (y[j] - ys) / b
+                # dysdwj = (y_vec[j] - ys) / b   # não usado diretamente aqui
+                for i in range(nin):
+                    dyjdpj = sample[i]
+                    p[i, j] = p[i, j] - ((alfa / 10.0) * dedys * dysdyj * dyjdpj)
+                q[j] = q[j] - ((alfa / 10.0) * dedys * dysdyj * dyjdqj)
 
-                for m in range(nin):
-                    dyjdpj = xt[k, m]
-                    p[m, j] -= (alfa / 10.0) * dedys * dysdyj * dyjdpj
-
-                q[j] -= (alfa / 10.0) * dedys * dysdyj * dyjdqj
-
+    # gerar nova população (chame sua rotina; mantenho a interface usada)
     pop = gerarnovapop.gerarnovapop(pop, melhorindv, tamPop, taxaCruza, taxaMuta, xmax, xmin)
 
-    # Avalia fitness dos indivíduos
+    # re-avaliar fitness
     for z in range(tamPop):
-        print(pop[z])
-        pop[z]['saida'] = saida.saida(xt, pop[z]['cs'], pop[z]['ss'], p, q, pop[z]['nfps'])[0] 
-        pop[z]['fitness'] = (0.5 * np.sum((pop[z]['saida'] - ydt) ** 2)) / npt
+        indiv = pop[z]
+        saida_full = saida.saida(x_train, indiv['cs'], indiv['ss'], p, q, indiv['nfps'])
+        y_pred = np.asarray(saida_full[0] if isinstance(saida_full, (list,tuple)) else saida_full).ravel()
+        indiv['saida'] = y_pred
+        indiv['fitness'] = (0.5 * np.sum((indiv['saida'] - y_train) ** 2)) / npt
 
-        if z == 0:
-            melhorindv = z
-        else:
-            if pop[z]['fitness'] < pop[melhorindv]['fitness']:
-                melhorindv = z
+    melhorindv = int(np.argmin([ind['fitness'] for ind in pop]))
 
-    c = pop[melhorindv]['cs']
-    s = pop[melhorindv]['ss']
+    # atualizar melhores parâmetros
+    c = pop[melhorindv]['cs'].copy()
+    s = pop[melhorindv]['ss'].copy()
     nfp = pop[melhorindv]['nfps']
-    yst = saida.saida(xt, c, s, p, q, nfp)[0]
+    # recomputar yst
+    yst_full = saida.saida(x_train, c, s, p, q, nfp)
+    yst = np.asarray(yst_full[0] if isinstance(yst_full, (list,tuple)) else yst_full).ravel()
 
-erro.append((0.5 * np.sum((yst - ydt) ** 2)) / npt)
-yst = saida.saida(xt, c, s, p, q, nfp)[0] 
-ysv = saida.saida(xv, c, s, p, q, nfp)[0] 
+# erro final
+erro.append((0.5 * np.sum((yst - y_train) ** 2)) / npt)
 
+# Resultado final - teste / validação
+yst_full = saida.saida(x_train, c, s, p, q, nfp)
+yst = np.asarray(yst_full[0] if isinstance(yst_full, (list,tuple)) else yst_full).ravel()
+ysv_full = saida.saida(x_val, c, s, p, q, nfp)
+ysv = np.asarray(ysv_full[0] if isinstance(ysv_full, (list,tuple)) else ysv_full).ravel()
 
+end_time = time.time()
+print(f"The script took {end_time - start_time:.3f} seconds to execute.")
 
-end_time = time.time() 
-execution_time = end_time - start_time 
-print(f"The script took {execution_time:.4f} seconds to execute.")
+c = np.array(c)
+s = np.array(s)
 
-
-fig1, axes = plt.subplots(2, nin, figsize=(4 * nin, 6))
+# -------------------------
+# Plots finais (MF final, erro, saídas)
+# -------------------------
+# MFs finais (segunda linha dos subplots)
 for j in range(nfp):
     for i in range(nin):
-        w = fuzz.gaussmf(xval, s[i, j], c[i, j])
+        w = gaussmf(xval, c[i, j], s[i, j])
         ax = axes[1, i] if nin > 1 else axes
-        ax.plot(xval, w, 'k')
-        ax.set_title('Membership Functions - Final')
+        ax.plot(xval, w, color='black', linewidth=0.8)
+        ax.set_title('Membership Functions - Final' if j == 0 else '')
         ax.set_xlabel(f'X_{i+1}')
         ax.set_ylabel('Membership')
         ax.set_xlim(xmin[i], xmax[i])
         ax.grid(True)
+fig_mf_init.tight_layout()
 
-fig1.tight_layout()
-
-# ---------- 2. Training Error (MSE) ----------
-fig2 = plt.figure()
+# Erro por geração
+plt.figure()
 plt.plot(erro, 'r', linewidth=1.5)
 plt.xlabel('Geração')
 plt.ylabel('EQM')
 plt.title('Erro Quadrático Médio')
 plt.grid(True)
 
-# ---------- 3. Training and Validation Outputs ----------
+# Saídas de treino/validação comparativas (equivalente aos subplots MATLAB)
 fig3, axs = plt.subplots(2, 3, figsize=(15, 8))
-
-axs[0, 0].plot(ydt, 'r', label='Saída Desejada')
+axs[0, 0].plot(y_train, 'r', label='Saída Desejada')
 axs[0, 0].plot(ytst, 'k', label='Saída Inicial')
-axs[0, 0].set_title('Treinamento - Saída Desejada x Saída Inicial')
-axs[0, 0].set_xlabel('Pontos')
-axs[0, 0].set_ylabel('X')
 axs[0, 0].legend()
+axs[0, 0].set_title('Treinamento - Saída Desejada x Saída Inicial')
 
 axs[0, 1].plot(yst, 'g')
 axs[0, 1].set_title('Treinamento - Saída Final')
-axs[0, 1].set_xlabel('Pontos')
-axs[0, 1].set_ylabel('X')
 
-axs[0, 2].plot(ydt, 'r', label='Saída Desejada')
+axs[0, 2].plot(y_train, 'r', label='Saída Desejada')
 axs[0, 2].plot(yst, 'g', label='Saída Final')
-axs[0, 2].set_title('Treinamento - Saída Desejada x Saída Final')
-axs[0, 2].set_xlabel('Pontos')
-axs[0, 2].set_ylabel('Y')
 axs[0, 2].legend()
+axs[0, 2].set_title('Treinamento - Saída Desejada x Saída Final')
 
-axs[1, 0].plot(ydv, 'r', label='Saída Desejada')
+axs[1, 0].plot(y_val, 'r', label='Saída Desejada')
 axs[1, 0].plot(yvst, 'k', label='Saída Inicial')
-axs[1, 0].set_title('Validação - Saída Desejada x Saída Inicial')
-axs[1, 0].set_xlabel('Pontos')
-axs[1, 0].set_ylabel('X')
 axs[1, 0].legend()
+axs[1, 0].set_title('Validação - Saída Desejada x Saída Inicial')
 
 axs[1, 1].plot(ysv, 'g')
 axs[1, 1].set_title('Validação - Saída Final')
-axs[1, 1].set_xlabel('Pontos')
-axs[1, 1].set_ylabel('X')
 
-axs[1, 2].plot(ydv, 'r', label='Saída Desejada')
+axs[1, 2].plot(y_val, 'r', label='Saída Desejada')
 axs[1, 2].plot(ysv, 'g', label='Saída Final')
-axs[1, 2].set_title('Validação - Saída Desejada x Saída Final')
-axs[1, 2].set_xlabel('Pontos')
-axs[1, 2].set_ylabel('Y')
 axs[1, 2].legend()
+axs[1, 2].set_title('Validação - Saída Desejada x Saída Final')
 
 fig3.tight_layout()
 
-# ---------- 4. Final Training Output ----------
-fig4 = plt.figure()
-plt.plot(ydt, 'r', label='Saída Desejada')
+# Figuras finais simples
+plt.figure()
+plt.plot(y_train, 'r', label='Saída Desejada')
 plt.plot(yst, 'b', label='Saída GP-NFN-I')
-plt.xlabel('Pontos')
-plt.ylabel('Y')
 plt.title('Treinamento - Saída Desejada x Saída Final')
 plt.legend()
 
-# ---------- 5. Final Validation Output ----------
-fig5 = plt.figure()
-plt.plot(ydv, 'r', label='Desired Output')
+plt.figure()
+plt.plot(y_val, 'r', label='Desired Output')
 plt.plot(ysv, 'g', label='Estimated Output')
-plt.xlabel('Samples')
-plt.ylabel('Y')
 plt.title('Validation - Desired Output x Estimated Output')
 plt.legend()
 
-# ---------- Show All ----------
 plt.show()
