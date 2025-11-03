@@ -6,7 +6,9 @@ readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "matplotlib>=3.10.3",
+    "nbformat>=5.10.4",
     "pandas>=2.2.3",
+    "plotly>=6.3.1",
     "scikit-fuzzy>=0.5.0",
     "scipy>=1.15.3",
 ]

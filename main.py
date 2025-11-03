@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import saida
 import gerarnovapop
+import mapa_caotico
 import skfuzzy as fuzz
 from scipy import sparse
 import time
@@ -16,10 +17,10 @@ alfa=0.01         #Alfa - parametro de atualizacao
 nepoca=5       #Numero de epocas de treinamento dos pesos para cada geração da PG
 
 #Parametros Programacao Genetica
-tamPop=50
-numGeracoes=25
+tamPop=100
+numGeracoes=100
 taxaCruza=0.7
-taxaMuta=0.08
+taxaMuta=0.09
 nfpMax=7; 
 
 _xt_temp = np.loadtxt('xt.csv', delimiter=',', skiprows=1)
@@ -72,9 +73,15 @@ for z in range(tamPop):
     
     for i in range(nfpSort):
         for j in range(nin):
-            cs[j, i] = xmin[j] + np.random.rand()*(xmax[j]-xmin[j])
-            ss[j, i] = np.random.rand()*(xmax[j]-xmin[j])
+            # cs[j, i] = xmin[j] + np.random.rand()*(xmax[j]-xmin[j])
+            # ss[j, i] = np.random.rand()*(xmax[j]-xmin[j])
+            cs[j, i] = xmin[j] + mapa_caotico.get_valor_caotico() * (xmax[j]-xmin[j])
+            ss[j, i] = mapa_caotico.get_valor_caotico() * (xmax[j]-xmin[j])
+            
+            p_ind[j, i] = mapa_caotico.get_valor_caotico()
 
+        q_ind[i] = mapa_caotico.get_valor_caotico()
+            
     individuo = {
         'nfps': nfpSort,
         'cs': cs,
@@ -106,20 +113,19 @@ xval = np.linspace(xmin[0], xmax[0], npt)
 xval[0] = xval[0]/10
 xval[1] = xval[1]/10
 
-# fig1, axes = plt.subplots(2, nin, figsize=(4 * nin, 6))
+fig1, axes = plt.subplots(2, nin, figsize=(4 * nin, 6))
 
 # Membership Functions - Initial (top row)
-# for j in range(nfp):
-#     for i in range(nin):
-#         w_init = fuzz.gaussmf(xval, c[i, j], s[i, j])
-#         ax = axes[0, i] if nin > 1 else axes
-#         ax.plot(xval, w_init, 'gray', linestyle='--', label='Initial' if j == 0 else "")
-#         ax.set_title(f'Membership Functions - Initial (X{i+1})')
-#         ax.set_xlabel(f'X_{i+1}')
-#         ax.set_ylabel('Membership')
-#         ax.set_xlim(xmin[i], xmax[i])
-#         ax.grid(True)
-
+for j in range(nfp):
+    for i in range(nin):
+        w_init = fuzz.gaussmf(xval, c[i, j], s[i, j])
+        ax = axes[0, i] if nin > 1 else axes
+        ax.plot(xval, w_init, 'gray', linestyle='--', label='Initial' if j == 0 else "")
+        ax.set_title(f'Membership Functions - Initial (X{i+1})')
+        ax.set_xlabel(f'X_{i+1}')
+        ax.set_ylabel('Membership')
+        ax.set_xlim(xmin[i], xmax[i])
+        ax.grid(True)
 
 ytst, _, _, _ = saida.saida(xt,c,s,p,q,nfp)
 yvst, _, _, _ = saida.saida(xv,c,s,p,q,nfp)
@@ -166,19 +172,19 @@ print(f"The script took {execution_time:.4f} seconds to execute.")
 c = np.asarray(pop[melhorindv]['cs'])
 s = np.asarray(pop[melhorindv]['ss'])
 
-# fig1, axes = plt.subplots(2, nin, figsize=(4 * nin, 6))
-# for j in range(nfp):
-#     for i in range(nin):
-#         w = fuzz.gaussmf(xval, c[i, j], s[i, j])
-#         ax = axes[1, i] if nin > 1 else axes
-#         ax.plot(xval, w, 'k')
-#         ax.set_title('Membership Functions - Final')
-#         ax.set_xlabel(f'X_{i+1}')
-#         ax.set_ylabel('Membership')
-#         ax.set_xlim(xmin[i], xmax[i])
-#         ax.grid(True)
+fig1, axes = plt.subplots(2, nin, figsize=(4 * nin, 6))
+for j in range(nfp):
+    for i in range(nin):
+        w = fuzz.gaussmf(xval, c[i, j], s[i, j])
+        ax = axes[1, i] if nin > 1 else axes
+        ax.plot(xval, w, 'k')
+        ax.set_title('Membership Functions - Final')
+        ax.set_xlabel(f'X_{i+1}')
+        ax.set_ylabel('Membership')
+        ax.set_xlim(xmin[i], xmax[i])
+        ax.grid(True)
 
-# fig1.tight_layout()
+fig1.tight_layout()
 
 # ---------- 2. Training Error (MSE) ----------
 fig2 = plt.figure()
@@ -189,56 +195,56 @@ plt.title('Erro Quadrático Médio')
 plt.grid(True)
 
 # # ---------- 3. Training and Validation Outputs ----------
-# fig3, axs = plt.subplots(2, 3, figsize=(15, 8))
+fig3, axs = plt.subplots(2, 3, figsize=(15, 8))
 
-# axs[0, 0].plot(ydt, 'r', label='Saída Desejada')
-# axs[0, 0].plot(ytst, 'k', label='Saída Inicial')
-# axs[0, 0].set_title('Treinamento - Saída Desejada x Saída Inicial')
-# axs[0, 0].set_xlabel('Pontos')
-# axs[0, 0].set_ylabel('X')
-# axs[0, 0].legend()
+axs[0, 0].plot(ydt, 'r', label='Saída Desejada')
+axs[0, 0].plot(ytst, 'k', label='Saída Inicial')
+axs[0, 0].set_title('Treinamento - Saída Desejada x Saída Inicial')
+axs[0, 0].set_xlabel('Pontos')
+axs[0, 0].set_ylabel('X')
+axs[0, 0].legend()
 
-# axs[0, 1].plot(yst, 'g')
-# axs[0, 1].set_title('Treinamento - Saída Final')
-# axs[0, 1].set_xlabel('Pontos')
-# axs[0, 1].set_ylabel('X')
+axs[0, 1].plot(yst, 'g')
+axs[0, 1].set_title('Treinamento - Saída Final')
+axs[0, 1].set_xlabel('Pontos')
+axs[0, 1].set_ylabel('X')
 
-# axs[0, 2].plot(ydt, 'r', label='Saída Desejada')
-# axs[0, 2].plot(yst, 'g', label='Saída Final')
-# axs[0, 2].set_title('Treinamento - Saída Desejada x Saída Final')
-# axs[0, 2].set_xlabel('Pontos')
-# axs[0, 2].set_ylabel('Y')
-# axs[0, 2].legend()
+axs[0, 2].plot(ydt, 'r', label='Saída Desejada')
+axs[0, 2].plot(yst, 'g', label='Saída Final')
+axs[0, 2].set_title('Treinamento - Saída Desejada x Saída Final')
+axs[0, 2].set_xlabel('Pontos')
+axs[0, 2].set_ylabel('Y')
+axs[0, 2].legend()
 
-# axs[1, 0].plot(ydv, 'r', label='Saída Desejada')
-# axs[1, 0].plot(yvst, 'k', label='Saída Inicial')
-# axs[1, 0].set_title('Validação - Saída Desejada x Saída Inicial')
-# axs[1, 0].set_xlabel('Pontos')
-# axs[1, 0].set_ylabel('X')
-# axs[1, 0].legend()
+axs[1, 0].plot(ydv, 'r', label='Saída Desejada')
+axs[1, 0].plot(yvst, 'k', label='Saída Inicial')
+axs[1, 0].set_title('Validação - Saída Desejada x Saída Inicial')
+axs[1, 0].set_xlabel('Pontos')
+axs[1, 0].set_ylabel('X')
+axs[1, 0].legend()
 
-# axs[1, 1].plot(ysv, 'g')
-# axs[1, 1].set_title('Validação - Saída Final')
-# axs[1, 1].set_xlabel('Pontos')
-# axs[1, 1].set_ylabel('X')
+axs[1, 1].plot(ysv, 'g')
+axs[1, 1].set_title('Validação - Saída Final')
+axs[1, 1].set_xlabel('Pontos')
+axs[1, 1].set_ylabel('X')
 
-# axs[1, 2].plot(ydv, 'r', label='Saída Desejada')
-# axs[1, 2].plot(ysv, 'g', label='Saída Final')
-# axs[1, 2].set_title('Validação - Saída Desejada x Saída Final')
-# axs[1, 2].set_xlabel('Pontos')
-# axs[1, 2].set_ylabel('Y')
-# axs[1, 2].legend()
+axs[1, 2].plot(ydv, 'r', label='Saída Desejada')
+axs[1, 2].plot(ysv, 'g', label='Saída Final')
+axs[1, 2].set_title('Validação - Saída Desejada x Saída Final')
+axs[1, 2].set_xlabel('Pontos')
+axs[1, 2].set_ylabel('Y')
+axs[1, 2].legend()
 
-# fig3.tight_layout()
+fig3.tight_layout()
 
-# # ---------- 4. Final Training Output ----------
-# fig4 = plt.figure()
-# plt.plot(ydt, 'r', label='Saída Desejada')
-# plt.plot(yst, 'b', label='Saída GP-NFN-I')
-# plt.xlabel('Pontos')
-# plt.ylabel('Y')
-# plt.title('Treinamento - Saída Desejada x Saída Final')
-# plt.legend()
+# ---------- 4. Final Training Output ----------
+fig4 = plt.figure()
+plt.plot(ydt, 'r', label='Saída Desejada')
+plt.plot(yst, 'b', label='Saída GP-NFN-I')
+plt.xlabel('Pontos')
+plt.ylabel('Y')
+plt.title('Treinamento - Saída Desejada x Saída Final')
+plt.legend()
 
 # ---------- 5. Final Validation Output ----------
 fig5 = plt.figure()

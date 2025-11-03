@@ -12,7 +12,6 @@ def cruzamento(pai1, pai2, p1, p2):
         'nfps': None
     }
 
-
     for j in range(p2 + 1, nfp2):
         for i in range(nin):
             if j2 >= len(filho['cs'][0]):
@@ -22,13 +21,11 @@ def cruzamento(pai1, pai2, p1, p2):
                     filho['p'][row_idx].append(0)
                 
                 filho['q'].append(0)
-
-            # Atribuir os valores do pai2 ao filho
+                
             filho['cs'][i][j2] = pai2['cs'][i][j]
             filho['ss'][i][j2] = pai2['ss'][i][j]
             filho['p'][i][j2] = pai2['p'][i][j]
-        
-        # Atribuir o valor de q fora do loop interno de 'i'
+
         filho['q'][j2] = pai2['q'][j]
         j2 += 1
 
