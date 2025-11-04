@@ -14,7 +14,7 @@ start_time = time.time()
 nfp = 5             # Funções de pertinência por variável
 nepoca = 5          # (não usado quando não há gradiente)
 # Parâmetros Programação Genética
-tamPop = 50
+tamPop = 100
 numGeracoes = 25
 taxaCruza = 0.7
 taxaMuta = 0.08
