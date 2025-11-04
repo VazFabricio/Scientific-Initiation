@@ -1,10 +1,7 @@
-# treinamento4_py.py
 import time
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy import sparse
-# não uso skfuzzy aqui para evitar confusão de ordem de parâmetros da gaussmf
-# se quiser usar skfuzzy, atente-se que a assinatura é (x, mean, sigma)
 import saida
 import gerarnovapop
 
@@ -25,12 +22,10 @@ taxaMuta = 0.08
 nfpMax = 7          # máximo de FPs geradas por indivíduo
 
 # -------------------------
-# Carregar dados (exemplo: csvs que você gerou)
+# Carregar dados
 # -------------------------
-# supondo xt.csv e yt.csv conforme você já vinha usando (sem header em dados numéricos)
-# Ajuste a leitura conforme seu formato real.
 _xt_temp = np.loadtxt('xt.csv', delimiter=',', skiprows=1)
-xt = _xt_temp[:, 1:]   # se o csv tiver um índice na 1ª coluna, como você fez
+xt = _xt_temp[:, 1:]
 _yt_temp = np.loadtxt('yt.csv', delimiter=',', skiprows=1)
 yt = _yt_temp[:, 1:]
 
@@ -42,7 +37,6 @@ yt = yt.ravel()
 # -------------------------
 npt_total, nin = xt.shape
 nptTr = int(round(npt_total * 0.6))
-# nptVal = int(round(npt_total * 0.2))  # não usado no MATLAB original: validação é o restante
 
 x_train = xt[:nptTr, :]
 x_val = xt[nptTr:npt_total, :]
@@ -50,7 +44,7 @@ x_val = xt[nptTr:npt_total, :]
 y_train = yt[:nptTr]
 y_val = yt[nptTr:npt_total]
 
-npt = nptTr  # número de pontos de treino (equivalente MATLAB)
+npt = nptTr 
 
 xmin = x_train.min(axis=0)
 xmax = x_train.max(axis=0)
@@ -67,8 +61,7 @@ p = rng.random((nin, nfp))
 q = rng.random(nfp)
 
 # -------------------------
-# Função gaussiana (mesma forma do MATLAB gaussmf com [sigma, mean])
-# vamos usar mean=c e sigma=s
+# Função gaussiana
 # -------------------------
 def gaussmf(x, mean, sigma):
     # evitar divisão por zero
@@ -81,7 +74,7 @@ def gaussmf(x, mean, sigma):
 # -------------------------
 pop = []
 for z in range(tamPop):
-    nfpSort = nfp  # mantive a lógica MATLAB (poderia variar até nfpMax)
+    nfpSort = nfp
     cs = np.empty((nin, nfpSort))
     ss = np.empty((nin, nfpSort))
     for j in range(nfpSort):
@@ -90,8 +83,6 @@ for z in range(tamPop):
             ss[i, j] = rng.random() * (xmax[i] - xmin[i])  # sigma relativo ao range
 
     indiv = {'nfps': nfpSort, 'cs': cs, 'ss': ss}
-    # chamada à sua função saida - assumo que retorna (saida_vector, w, y, b) ou similar
-    # ajustar se a interface real for diferente
     saida_full = saida.saida(x_train, cs, ss, p, q, nfpSort)
     # pegar primeiro elemento (vetor de saídas)
     if isinstance(saida_full, tuple) or isinstance(saida_full, list):
@@ -112,7 +103,7 @@ nfp = pop[melhorindv]['nfps']
 novapop = pop.copy()
 
 # -------------------------
-# Preparar xval para plot das MF (apenas para a primeira variável como no MATLAB)
+# Preparar xval para plot das MF
 # -------------------------
 xval = np.linspace(xmin[0], xmax[0], npt)
 
@@ -149,22 +140,19 @@ for gen in range(numGeracoes):
     erro.append((0.5 * np.sum((yst - y_train) ** 2)) / npt)
     dyjdqj = 1.0
 
-    # treinamento dos pesos p e q (gradient-like) conforme MATLAB
+    # treinamento dos pesos p e q (gradient-like)
     for _ in range(nepoca):
         for k in range(npt):
             sample = x_train[k, :]
-            # chamar saida para 1 amostra - adaptar se assinatura difere
+            # chamar saida para 1 amostra
             ys_full = saida.saida(sample, c, s, p, q, nfp)
-            # supondo que ys_full devolve (ys_scalar, w_vector, y_vector, b_scalar)
             if isinstance(ys_full, (list, tuple)):
                 ys = float(np.asarray(ys_full[0]).ravel())
                 w = np.asarray(ys_full[1]).ravel()
                 y_vec = np.asarray(ys_full[2])
                 b = float(ys_full[3])
             else:
-                # se só retorna escalar
                 ys = float(np.asarray(ys_full).ravel())
-                # sem w, y, b disponíveis -> não podemos atualizar corretamente
                 raise RuntimeError("saida.saida não retornou (ys, w, y, b). Ajuste a função 'saida'.")
 
             dedys = ys - float(y_train[k])  # erro escalar
@@ -177,7 +165,6 @@ for gen in range(numGeracoes):
                     p[i, j] = p[i, j] - ((alfa / 10.0) * dedys * dysdyj * dyjdpj)
                 q[j] = q[j] - ((alfa / 10.0) * dedys * dysdyj * dyjdqj)
 
-    # gerar nova população (chame sua rotina; mantenho a interface usada)
     pop = gerarnovapop.gerarnovapop(pop, melhorindv, tamPop, taxaCruza, taxaMuta, xmax, xmin)
 
     # re-avaliar fitness
@@ -237,7 +224,7 @@ plt.ylabel('EQM')
 plt.title('Erro Quadrático Médio')
 plt.grid(True)
 
-# Saídas de treino/validação comparativas (equivalente aos subplots MATLAB)
+# Saídas de treino/validação comparativas
 fig3, axs = plt.subplots(2, 3, figsize=(15, 8))
 axs[0, 0].plot(y_train, 'r', label='Saída Desejada')
 axs[0, 0].plot(ytst, 'k', label='Saída Inicial')
