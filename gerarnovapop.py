@@ -3,7 +3,9 @@ import torneio
 import cruzamento
 import mutacao
 import copy
-import mapa_caotico
+from mapa_caotico import ChaoticRNG
+
+_caos_pop = ChaoticRNG(x0=0.98765, r=3.99)
 
 def gerarnovapop(pop, melhorindvidx, tamPop, taxaCruza, taxaMuta, xmax, xmin):
     
@@ -26,13 +28,13 @@ def gerarnovapop(pop, melhorindvidx, tamPop, taxaCruza, taxaMuta, xmax, xmin):
         # if np.random.rand() < taxaCruza:
         #     filho = cruzamento.cruzamento(pop[parent1], pop[parent2], pontocruza1, pontocruza2)
             
-        if mapa_caotico.get_valor_caotico() < taxaCruza:
+        if _caos_pop.next() < taxaCruza:
             filho = cruzamento.cruzamento(pop[parent1], pop[parent2], pontocruza1, pontocruza2)
             
             # if np.random.rand() < taxaMuta:
             #     filho = mutacao.mutacao(filho, xmax, xmin)
             
-            if mapa_caotico.get_valor_caotico() < taxaMuta:
+            if _caos_pop.next() < taxaMuta:
                 filho = mutacao.mutacao(filho, xmax, xmin)
             
             nova_pop.append(filho)
@@ -41,7 +43,7 @@ def gerarnovapop(pop, melhorindvidx, tamPop, taxaCruza, taxaMuta, xmax, xmin):
             #     filho2 = mutacao.mutacao(copy.deepcopy(filho), xmax, xmin)
             #     nova_pop.append(filho2)
                 
-            if len(nova_pop) < tamPop and mapa_caotico.get_valor_caotico() < taxaMuta:
+            if len(nova_pop) < tamPop and _caos_pop.next() < taxaMuta:
                 filho2 = mutacao.mutacao(copy.deepcopy(filho), xmax, xmin)
                 nova_pop.append(filho2)
         else:
@@ -49,7 +51,7 @@ def gerarnovapop(pop, melhorindvidx, tamPop, taxaCruza, taxaMuta, xmax, xmin):
             # if np.random.rand() < taxaMuta:
             #     ind1 = mutacao.mutacao(ind1, xmax, xmin)
             # nova_pop.append(ind1)
-            if mapa_caotico.get_valor_caotico() < taxaMuta:
+            if _caos_pop.next() < taxaMuta:
                 ind1 = mutacao.mutacao(ind1, xmax, xmin)
             nova_pop.append(ind1)
 
@@ -58,7 +60,7 @@ def gerarnovapop(pop, melhorindvidx, tamPop, taxaCruza, taxaMuta, xmax, xmin):
                 # if np.random.rand() < taxaMuta:
                 #     ind2 = mutacao.mutacao(ind2, xmax, xmin)
                 # nova_pop.append(ind2)
-                if mapa_caotico.get_valor_caotico() < taxaMuta:
+                if _caos_pop.next() < taxaMuta:
                     ind2 = mutacao.mutacao(ind2, xmax, xmin)
                 nova_pop.append(ind2)
 
