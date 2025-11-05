@@ -15,7 +15,7 @@ nfp = 5             # Funções de pertinência por variável
 nepoca = 5          # (não usado quando não há gradiente)
 # Parâmetros Programação Genética
 tamPop = 100
-numGeracoes = 25
+numGeracoes = 500
 taxaCruza = 0.7
 taxaMuta = 0.08
 nfpMax = 7
