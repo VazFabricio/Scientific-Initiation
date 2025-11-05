@@ -1,6 +1,7 @@
 import time
 import numpy as np
 import matplotlib.pyplot as plt
+from sklearn.metrics import r2_score, mean_squared_error
 from scipy import sparse
 import saida
 import gerarnovapop
@@ -15,9 +16,9 @@ alfa = 0.01         # taxa de aprendizado (alfa)
 nepoca = 5          # número de épocas de atualização dos pesos por geração
 
 # Parâmetros Programação Genética
-tamPop = 5
-numGeracoes = 5
-taxaCruza = 0.7
+tamPop = 50
+numGeracoes = 50
+taxaCruza = 0.9
 taxaMuta = 0.08
 nfpMax = 7          # máximo de FPs geradas por indivíduo
 
@@ -29,22 +30,29 @@ xt = _xt_temp[:, 1:]
 _yt_temp = np.loadtxt('yt.csv', delimiter=',', skiprows=1)
 yt = _yt_temp[:, 1:]
 
-# garantir shapes 1D para yt
 yt = yt.ravel()
 
 # -------------------------
 # Partição de treino/validação
 # -------------------------
+
+nptTr = 2100      # 2.100 para treinar
+nptVal = 700      # 700 para validar
+nptTs = 700       # 700 para avaliar (testar)
 npt_total, nin = xt.shape
-nptTr = int(round(npt_total * 0.6))
 
-x_train = xt[:nptTr, :]
-x_val = xt[nptTr:npt_total, :]
+if npt_total < (nptTr + nptVal + nptTs):
+    raise ValueError(f"O total de amostras ({npt_total}) é menor que o esperado (3500).")
 
-y_train = yt[:nptTr]
-y_val = yt[nptTr:npt_total]
+x_train = xt[0:nptTr, :]
+y_train = yt[0:nptTr]
+npt = nptTr # npt é usado nos cálculos de fitness
 
-npt = nptTr 
+x_val = xt[nptTr : nptTr + nptVal, :]
+y_val = yt[nptTr : nptTr + nptVal]
+
+x_test = xt[nptTr + nptVal : nptTr + nptVal + nptTs, :]
+y_test = yt[nptTr + nptVal : nptTr + nptVal + nptTs]
 
 xmin = x_train.min(axis=0)
 xmax = x_train.max(axis=0)
@@ -129,6 +137,14 @@ ytst = np.asarray(ytst_full[0] if isinstance(ytst_full, (list,tuple)) else ytst_
 yvst_full = saida.saida(x_val, c, s, p, q, nfp)
 yvst = np.asarray(yvst_full[0] if isinstance(yvst_full, (list,tuple)) else yvst_full).ravel()
 
+yst_full = saida.saida(x_train, c, s, p, q, nfp)
+yst = np.asarray(yst_full[0] if isinstance(yst_full, (list,tuple)) else yst_full).ravel()
+ysv_full = saida.saida(x_val, c, s, p, q, nfp)
+ysv = np.asarray(ysv_full[0] if isinstance(ysv_full, (list,tuple)) else ysv_full).ravel()
+
+ystest_full = saida.saida(x_test, c, s, p, q, nfp) # Saída do teste
+ystest = np.asarray(ystest_full[0] if isinstance(ystest_full, (list,tuple)) else ystest_full).ravel()
+
 # -------------------------
 # Treinamento (laço de gerações + atualizações de p,q por época)
 # -------------------------
@@ -201,8 +217,23 @@ c = np.array(c)
 s = np.array(s)
 
 # -------------------------
+# Métricas de desempenho
+# -------------------------
+
+# Calcular RMSE, MSE e R² para o conjunto de teste
+mse_test = mean_squared_error(y_test, ystest)
+rmse_test = np.sqrt(mse_test)
+r2_test = r2_score(y_test, ystest)
+
+print("\n===== MÉTRICAS - CONJUNTO DE TESTE =====")
+print(f"MSE  = {mse_test:.6f}")
+print(f"RMSE = {rmse_test:.6f}")
+print(f"R²   = {r2_test:.6f}")
+
+# -------------------------
 # Plots finais (MF final, erro, saídas)
 # -------------------------
+
 # MFs finais (segunda linha dos subplots)
 for j in range(nfp):
     for i in range(nin):
@@ -227,7 +258,7 @@ plt.grid(True)
 # Saídas de treino/validação comparativas
 fig3, axs = plt.subplots(2, 3, figsize=(15, 8))
 axs[0, 0].plot(y_train, 'r', label='Saída Desejada')
-axs[0, 0].plot(ytst, 'k', label='Saída Inicial')
+axs[0, 0].plot(yst, 'k', label='Saída Inicial')
 axs[0, 0].legend()
 axs[0, 0].set_title('Treinamento - Saída Desejada x Saída Inicial')
 
@@ -266,5 +297,23 @@ plt.plot(y_val, 'r', label='Desired Output')
 plt.plot(ysv, 'g', label='Estimated Output')
 plt.title('Validation - Desired Output x Estimated Output')
 plt.legend()
+
+plt.figure()
+plt.plot(y_test, 'r', label='Saída Desejada (Teste)')
+plt.plot(ystest, 'g', label='Saída Estimada (Teste)')
+plt.title('Avaliação (Teste) - Saída Desejada x Saída Estimada')
+plt.legend()
+
+# -------------------------
+# Gráfico: Saída Real vs Predita (Teste)
+# -------------------------
+plt.figure(figsize=(6,6))
+plt.scatter(y_test, ystest, color='blue', alpha=0.6, label='Amostras')
+plt.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 'r--', linewidth=1.5, label='y = x')
+plt.title('Dispersão: Saída Real vs. Predita (Teste)')
+plt.xlabel('Saída Real')
+plt.ylabel('Saída Predita')
+plt.legend()
+plt.grid(True)
 
 plt.show()
