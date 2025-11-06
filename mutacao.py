@@ -9,8 +9,7 @@ def mutacao(indv, xmax, xmin):
 
     i = round(1 + np.random.rand() * (nin - 1)) - 1
     j = round(1 + np.random.rand() * (nfp - 1)) - 1
-    # indv['cs'][i][j] = np.random.rand() * (xmax[i] - xmin[i])
-    # indv['ss'][i][j] = np.random.rand() * (xmax[i] - xmin[i])
+
     indv['cs'][i][j] = (_caos_mut.next() *   (xmax[i] - xmin[i]))
     indv['ss'][i][j] = (_caos_mut.next() * (xmax[i] - xmin[i]))
 
@@ -18,8 +17,6 @@ def mutacao(indv, xmax, xmin):
     i_cons = round(np.random.rand() * (nin - 1))
     j_cons = round(np.random.rand() * (nfp - 1))
 
-    # indv['p'][i_cons][j_cons] = np.random.rand()
-    # indv['q'][j_cons] = np.random.rand()
     indv['p'][i_cons][j_cons] = _caos_mut.next()
     indv['q'][j_cons] = _caos_mut.next()
     

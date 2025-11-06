@@ -19,8 +19,6 @@ class ChaoticRNG:
         return a + (b - a) * self.next()
 
 
-
-
 def init(x0=0.123456789, r=3.99):
     """Inicializa o gerador caótico padrão (chamar antes de usar get_valor_caotico)."""
     global _default
@@ -35,7 +33,6 @@ def get_valor_caotico():
     if _default is None:
         init()   # inicializa com valores default se não chamado
     return _default.next()
-
 
 def rand(a=0.0, b=1.0):
     """Retorna valor mapeado para [a,b]."""
