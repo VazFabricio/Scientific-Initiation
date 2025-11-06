@@ -11,7 +11,7 @@ import gerarnovapop
 NFP_INIT = 5           
 TAM_POP = 100
 NUM_GERACOES = 25
-TAXA_CRUZA = 0.7
+TAXA_CRUZA = 0.69
 TAXA_MUTA = 0.08
 NFP_MAX = 7
 
