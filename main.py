@@ -53,11 +53,17 @@ xmin = xt.min(axis=0)
 xmax = xt.max(axis=0)
 delta = (xmax - xmin) / (NFP_INIT - 1)
 
-rng = np.random.default_rng()
+# -------------------------
+# função gaussiana (para plot das MFs)
+# -------------------------
+def gaussmf(x, mean, sigma):
+    sigma = np.maximum(sigma, 1e-12)
+    return np.exp(-((x - mean) ** 2) / (2.0 * sigma ** 2))
 
 # -------------------------
 # Gera população inicial
 # -------------------------
+rng = np.random.default_rng()
 pop = []
 for z in range(TAM_POP):
     nfpSort = NFP_INIT
@@ -85,6 +91,32 @@ s = pop[melhorindv]['ss'].copy()
 nfp = pop[melhorindv]['nfps']
 p = pop[melhorindv]['p']
 q = pop[melhorindv]['q']
+
+# -------------------------
+# Preparar xval para plot das MF (visto que usaremos 2 linhas: inicial e final)
+# -------------------------
+xval = np.linspace(xmin[0], xmax[0], max(200, npt))
+
+# configurar figura MF (2 linhas: inicial e final; colunas = nin)
+fig_mf, axes = plt.subplots(2, max(1, nin), figsize=(4 * max(1, nin), 6))
+axes = np.array(axes)
+if axes.ndim == 1:
+    axes = axes.reshape(2, 1)
+elif axes.shape[0] != 2:
+    axes = axes.reshape(2, nin)
+
+# plot MFs iniciais (usando c,s do melhor indivíduo inicial)
+for j in range(nfp):
+    for i in range(nin):
+        w = gaussmf(xval, c[i, j], s[i, j])
+        ax = axes[0, i]
+        ax.plot(xval, w, linewidth=0.8)
+        if j == 0:
+            ax.set_title('Membership Functions - Inicial')
+        ax.set_xlabel(f'X_{i+1}')
+        ax.set_ylabel('Membership')
+        ax.set_xlim(xmin[i], xmax[i])
+        ax.grid(True)
 
 # -------------------------
 # Saídas iniciais (sem treinamento)
@@ -155,6 +187,21 @@ print(f"Teste    -> RMSE: {rmse_test:.6f}  R2: {r2_test:.6f}")
 # -------------------------
 # Plots
 # -------------------------
+# Plot MFs finais (segunda linha dos subplots)
+c = np.array(c)
+s = np.array(s)
+for j in range(nfp):
+    for i in range(nin):
+        w_final = gaussmf(xval, c[i, j], s[i, j])
+        ax = axes[1, i]
+        ax.plot(xval, w_final, linewidth=0.8)
+        if j == 0:
+            ax.set_title('Membership Functions - Final')
+        ax.set_xlabel(f'X_{i+1}')
+        ax.set_ylabel('Membership')
+        ax.set_xlim(xmin[i], xmax[i])
+        ax.grid(True)
+fig_mf.tight_layout()
 
 # Erro por geração
 plt.figure()
