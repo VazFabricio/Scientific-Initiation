@@ -1,7 +1,7 @@
 def cruzamento(pai1, pai2, p1, p2):
     nin, nfp1 = len(pai1['cs']), len(pai1['cs'][0])
     nfp2 = len(pai2['ss'][0])
-    j2 = p1 + 1
+    j2 = p1
 
     filho = {
         'cs': [row[:] for row in pai1['cs']],
