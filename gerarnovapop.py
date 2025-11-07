@@ -3,7 +3,6 @@
 import numpy as np
 import copy # Importante: necessário para copiar os indivíduos
 
-# Supondo que seus outros arquivos se chamam torneio.py, cruzamento.py e mutacao.py
 import torneio 
 import cruzamento
 import mutacao
