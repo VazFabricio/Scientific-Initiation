@@ -1,8 +1,5 @@
-# Arquivo: gerarnovapop.py
-
 import numpy as np
-import copy # Importante: necessário para copiar os indivíduos
-
+import copy
 import torneio 
 import cruzamento
 import mutacao
