@@ -31,20 +31,15 @@ yt_all = _raw_y[:, 1:].ravel()
 npt_total, nin = xt_all.shape
 
 # -------------------------
-# Partição: 60% treino / 40% validação (Teste desativado)
+# Partição: 60% treino / 40% validação
 # -------------------------
 npt_tr = int(round(npt_total * 0.6))
-# npt_val = int(round(npt_total * 0.2))
-# npt_ts = npt_total - npt_tr - npt_val
+
 
 xt = xt_all[:npt_tr, :].copy()           
 ydt = yt_all[:npt_tr].copy()             
 xv = xt_all[npt_tr:, :].copy()  # validação (xv)
 ydv = yt_all[npt_tr:].copy()    # y validação (ydv)   
-x_test = np.array([]) 
-y_test = np.array([])
-# x_test = xt_all[npt_tr + npt_val:, :].copy()    
-# y_test = yt_all[npt_tr + npt_val:].copy()
 
 npt = npt_tr  
 
@@ -125,7 +120,6 @@ for j in range(nfp):
 # -------------------------
 yst = np.asarray(saida.saida(xt, c, s, p, q, nfp)[0]).ravel()
 ysv = np.asarray(saida.saida(xv, c, s, p, q, nfp)[0]).ravel()
-# ystest = np.asarray(saida.saida(x_test, c, s, p, q, nfp)[0]).ravel()
 
 # -------------------------
 # Loop de gerações
@@ -161,8 +155,6 @@ erro.append((0.5 * np.sum((yst - ydt) ** 2)) / npt)
 # -------------------------
 y_train_pred_final = np.asarray(saida.saida(xt, c, s, p, q, nfp)[0]).ravel()
 y_val_pred_final = np.asarray(saida.saida(xv, c, s, p, q, nfp)[0]).ravel()
-y_test_pred_final = np.array([])
-# y_test_pred_final = np.asarray(saida.saida(x_test, c, s, p, q, nfp)[0]).ravel()
 
 end_time = time.time()
 print(f"\nTempo de execução: {end_time - start_time:.3f} s")
@@ -170,24 +162,17 @@ print(f"\nTempo de execução: {end_time - start_time:.3f} s")
 # -------------------------
 # Métricas
 # -------------------------
-mse_val = mean_squared_error(ydv, y_val_pred_final) if len(ydv) > 0 else np.nan
-rmse_val = np.sqrt(mse_val) if not np.isnan(mse_val) else np.nan
-r2_val = r2_score(ydv, y_val_pred_final) if len(ydv) > 0 else np.nan
+mse_val = 0.5 * mean_squared_error(ydv, y_val_pred_final)
+rmse_val = np.sqrt(mse_val)
+r2_val = r2_score(ydv, y_val_pred_final)
 
-# <<< Este bloco agora usará y_test=[] e y_test_pred_final=[]
-# <<< O seu 'if len(y_test) > 0' garante que o resultado será 'nan'
-mse_test = mean_squared_error(y_test, y_test_pred_final) if len(y_test) > 0 else np.nan
-rmse_test = np.sqrt(mse_test) if not np.isnan(mse_test) else np.nan
-r2_test = r2_score(y_test, y_test_pred_final) if len(y_test) > 0 else np.nan
-
-mse_train = mean_squared_error(ydt, y_train_pred_final)
+mse_train = 0.5 * mean_squared_error(ydt, y_train_pred_final)
 rmse_train = np.sqrt(mse_train)
 r2_train = r2_score(ydt, y_train_pred_final)
 
 print("\n===== MÉTRICAS =====")
 print(f"Treino   -> RMSE: {rmse_train:.6f}  R2: {r2_train:.6f}")
 print(f"Validação-> RMSE: {rmse_val:.6f}  R2: {r2_val:.6f}")
-# print(f"Teste    -> RMSE: {rmse_test:.6f}  R2: {r2_test:.6f}")
 
 # -------------------------
 # Plots
