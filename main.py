@@ -9,17 +9,16 @@ import gerarnovapop
 # -------------------------
 # Parâmetros ajustáveis
 # -------------------------
-NFP_INIT = 3
+NFP_INIT = 5
 ALFA = 0.01           
 NEPOCA = 3      
 
 # Parâmetros AG
 TAM_POP = 50
-NUM_GERACOES = 250
+NUM_GERACOES = 300
 TAXA_CRUZA = 0.9
 TAXA_MUTA = 0.08
-NFP_MAX = 1
-
+NFP_MAX = 5
 FILE_XT = 'xt.csv'
 FILE_YT = 'yt.csv'
 
@@ -37,7 +36,7 @@ yt_all = _raw_y[:, 1:].ravel()  # vetor coluna -> ravel
 npt_total, nin = xt_all.shape
 
 # -------------------------
-# Partição: 60% treino / 40% validação (Teste desativado) # <<< Título alterado
+# Partição: 60% treino / 40% validação (Teste desativado)
 # -------------------------
 npt_tr = int(round(npt_total * 0.6))
 # npt_val = int(round(npt_total * 0.2)) # <<< Comentado
