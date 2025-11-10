@@ -1,53 +1,70 @@
 import numpy as np
-import torneio
+import copy
+
+import torneio 
 import cruzamento
 import mutacao
-import copy
-from mapa_caotico import ChaoticRNG
-
-_caos_pop = ChaoticRNG(x0=0.98765, r=3.99)
 
 def gerarnovapop(pop, melhorindvidx, tamPop, taxaCruza, taxaMuta, xmax, xmin):
-    
+   
     melhorindv = pop[melhorindvidx]
-
-    nova_pop = [copy.deepcopy(melhorindv)]
+    nova_pop = [melhorindv]
 
     while len(nova_pop) < tamPop:
-        z = len(nova_pop)
 
-        parent1 = torneio.torneio(pop, 3)
-        parent2 = torneio.torneio(pop, 3)
+        parent1_idx = torneio.torneio(pop, 3)
+        parent2_idx = torneio.torneio(pop, 3)
+        parent1 = pop[parent1_idx]
+        parent2 = pop[parent2_idx]
 
-        limitep1 = round((pop[parent1]['nfps'] - 1) / 2)
-        limitep2 = round((pop[parent2]['nfps'] - 1) / 2) + 1
+        limitep1 = round((parent1['nfps'] - 1) / 2)
+        limitep2 = round((parent2['nfps'] - 1) / 2) + 1
+        
+        limitep1 = max(0, limitep1)
+        limitep2 = max(0, limitep2)
 
         pontocruza1 = round(1 + np.random.rand() * limitep1)
-        pontocruza2 = round(limitep2 + np.random.rand() * (pop[parent2]['nfps'] - 1))
+        pontocruza2 = round(limitep2 + np.random.rand() * (parent2['nfps'] - 1))
+        
+        # --- Crossover ---
+        if np.random.rand() < taxaCruza:
+            # Cria o primeiro filho
+            filho1 = cruzamento.cruzamento(parent1, parent2, int(pontocruza1), int(pontocruza2))
+
+            if np.random.rand() < taxaMuta:
+                filho1 = mutacao.mutacao(filho1, xmax, xmin)
             
-        if _caos_pop.next() < taxaCruza:
-            filho = cruzamento.cruzamento(pop[parent1], pop[parent2], pontocruza1, pontocruza2)
-            
-            if _caos_pop.next() < taxaMuta:
-                filho = mutacao.mutacao(filho, xmax, xmin)
-            
-            nova_pop.append(filho)
-                
-            if len(nova_pop) < tamPop and _caos_pop.next() < taxaMuta:
-                filho2 = mutacao.mutacao(copy.deepcopy(filho), xmax, xmin)
-                nova_pop.append(filho2)
-        else:
-            ind1 = copy.deepcopy(pop[parent1])
-            
-            if _caos_pop.next() < taxaMuta:
-                ind1 = mutacao.mutacao(ind1, xmax, xmin)
-            nova_pop.append(ind1)
+            nova_pop.append(filho1)
 
             if len(nova_pop) < tamPop:
-                ind2 = copy.deepcopy(pop[parent2])
+                
+                filho2 = copy.deepcopy(filho1) 
+                
+                if np.random.rand() < taxaMuta:
+                
+                    filho2 = mutacao.mutacao(filho2, xmax, xmin)
+                
+                nova_pop.append(filho2) 
 
-                if _caos_pop.next() < taxaMuta:
+        # --- Sem Crossover (Seleção) ---
+        else:
+            # Pega o pai 1 (como referência)
+            ind1 = parent1 
+            if np.random.rand() < taxaMuta:
+    
+                ind1 = mutacao.mutacao(ind1, xmax, xmin)
+            
+            nova_pop.append(ind1)
+
+            # Verifica se ainda há espaço
+            if len(nova_pop) < tamPop:
+                # Pega o pai 2 (como referência)
+                ind2 = parent2
+                if np.random.rand() < taxaMuta:
+                    # Se mutar, 'ind2' recebe o NOVO objeto
                     ind2 = mutacao.mutacao(ind2, xmax, xmin)
+                
                 nova_pop.append(ind2)
 
-    return nova_pop
+    # Garante que a população tenha exatamente o tamanho tamPop
+    return nova_pop[:tamPop]

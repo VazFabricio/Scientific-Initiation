@@ -2,7 +2,7 @@ def cruzamento(pai1, pai2, p1, p2):
     nin = len(pai1['cs'])
     nfp1 = len(pai1['cs'][0])
     nfp2 = len(pai2['cs'][0])
-    j2 = p1 + 1
+    j2 = p1
 
     filho = {
         'cs': [row[:] for row in pai1['cs']],
@@ -11,6 +11,7 @@ def cruzamento(pai1, pai2, p1, p2):
         'q': list(pai1['q']),
         'nfps': None
     }
+
 
     for j in range(p2 + 1, nfp2):
         for i in range(nin):

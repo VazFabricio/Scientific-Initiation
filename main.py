@@ -90,7 +90,6 @@ for z in range(TAM_POP):
         v = _caos_main.next()
         q_ind[j] = v
 
-
     indiv = {
         'nfps': nfpSort,
         'cs': cs,
