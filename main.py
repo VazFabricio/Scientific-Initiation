@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from sklearn.metrics import mean_squared_error, r2_score
 import saida
 import gerarnovapop
+import buscalocal
 
 # -------------------------
 # Parâmetros ajustáveis
@@ -14,7 +15,7 @@ NEPOCA = 5
 
 # Parâmetros AG
 TAM_POP = 50
-NUM_GERACOES = 5
+NUM_GERACOES = 500
 TAXA_CRUZA = 0.9
 TAXA_MUTA = 0.08
 NFP_MAX = 5
@@ -155,6 +156,7 @@ ysv = extract_prediction(saida.saida(xv, c, s, p, q, nfp))
 # Treinamento (laço de gerações + atualização p,q por época)
 # -------------------------
 erro = []
+erro2 = []
 y_train_pred = yst.copy()
 
 for gen in range(NUM_GERACOES):
@@ -178,12 +180,18 @@ for gen in range(NUM_GERACOES):
                 dysdyj = w[j] / b
                 for i in range(nin):
                     dyjdpj = sample[i]
-                    p[i, j] = p[i, j] - ((ALFA / 10.0) * dedys * dysdyj * dyjdpj)
-                q[j] = q[j] - ((ALFA / 10.0) * dedys * dysdyj * dyjdqj)
-
+                    p[i, j] = p[i, j] - ((ALFA) * dedys * dysdyj * dyjdpj)
+                q[j] = q[j] - ((ALFA) * dedys * dysdyj * dyjdqj)
+                
     # aplicar operador genético para gerar nova população
     pop = gerarnovapop.gerarnovapop(pop, melhorindv, TAM_POP, TAXA_CRUZA, TAXA_MUTA, xmax, xmin)
 
+    for z in range(TAM_POP):
+        # O step_size define o tamanho do ajuste fino
+        pop[z] = buscalocal.busca_local_antecedentes(
+            pop[z], xt, ydt, p, q, pop[z]['nfps'], step_size=0.01
+        )
+        
     # re-avaliar fitness da nova população (sempre usando os pesos p,q atuais e dados de treino)
     for z in range(TAM_POP):
         indiv = pop[z]
@@ -202,9 +210,11 @@ for gen in range(NUM_GERACOES):
 
     # recomputar predição de treino com parâmetros atualizados
     y_train_pred = extract_prediction(saida.saida(xt, c, s, p, q, nfp))
+    erro2.append((0.5 * np.sum((y_train_pred - ydt) ** 2)) / npt)
 
 # adiciona último erro
 erro.append((0.5 * np.sum((y_train_pred - ydt) ** 2)) / npt)
+erro2.append((0.5 * np.sum((y_train_pred - ydt) ** 2)) / npt)
 
 # -------------------------
 # Predições finais (com os parâmetros finais)
@@ -257,6 +267,14 @@ plt.plot(erro, 'r', linewidth=1.5)
 plt.xlabel('Geração')
 plt.ylabel('EQM (treino)')
 plt.title('Erro Quadrático Médio por Geração (treino)')
+plt.grid(True)
+
+# Erro por geração
+plt.figure()
+plt.plot(erro2, 'r', linewidth=1.5)
+plt.xlabel('Geração')
+plt.ylabel('EQM (treino)')
+plt.title('Erro Quadrático Médio por Geração (treino) 2')
 plt.grid(True)
 
 # Plots comparativos (treino e validação)
