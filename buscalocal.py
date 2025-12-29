@@ -4,8 +4,23 @@ Implementar um refinamento estocástico (Hill Climbing) para ajustar centros e l
 import numpy as np
 import saida
 
-def busca_local_antecedentes(indv, xt, ydt, p, q, nfp, step_size=0.01):
-    
+
+def busca_local_estocastica(indv, xt, ydt, p, q, nfp, step_size=0.01):
+    """
+    Realiza uma busca local estocástica aplicando perturbações gaussianas nos parâmetros.
+
+    Args:
+        indv (dict): Estrutura do indivíduo com parâmetros gaussianos.
+        xt (np.array): Entradas do conjunto de dados.
+        ydt (np.array): Saídas esperadas (target).
+        p, q (int): Parâmetros de configuração do modelo.
+        nfp (int): Número de funções de pertinência por entrada.
+        step_size (float): Desvio padrão da perturbação gaussiana aplicada.
+
+    Returns:
+        dict: Indivíduo com parâmetros potencialmente melhorados.
+    """
+
     def calc_erro(ind):
         ret = saida.saida(xt, ind['cs'], ind['ss'], p, q, nfp)
         y_pred = ret[0] if isinstance(ret, (list, tuple)) else ret
@@ -15,43 +30,49 @@ def busca_local_antecedentes(indv, xt, ydt, p, q, nfp, step_size=0.01):
     melhor_erro = calc_erro(indv)
     nin = len(indv['cs'])
     
-    # Itera sobre os parametros para tentar refinamento
+    attempts_per_param = 3 
+
     for j in range(nfp):
         for i in range(nin):
-            # --- Refino do Centro (c) ---
             original_c = indv['cs'][i][j]
             
-            indv['cs'][i][j] = original_c + step_size
-            erro_pos = calc_erro(indv)
-            
-            if erro_pos < melhor_erro:
-                melhor_erro = erro_pos
-            else:
-                indv['cs'][i][j] = original_c - step_size
-                erro_neg = calc_erro(indv)
-                if erro_neg < melhor_erro:
-                    melhor_erro = erro_neg
-                else:
-                    indv['cs'][i][j] = original_c
-
-            # --- Refino da Largura (s) ---
-            original_s = indv['ss'][i][j]
-            
-            indv['ss'][i][j] = original_s + step_size
-            erro_pos = calc_erro(indv)
-            
-            if erro_pos < melhor_erro:
-                melhor_erro = erro_pos
-            else:
-                indv['ss'][i][j] = original_s - step_size
-                if indv['ss'][i][j] < 1e-4: 
-                    indv['ss'][i][j] = 1e-4
+            melhorou_c = False
+            for _ in range(attempts_per_param):
+                noise = np.random.normal(0, step_size)
+                indv['cs'][i][j] = original_c + noise
+                erro_temp = calc_erro(indv)
                 
-                erro_neg = calc_erro(indv)
-                if erro_neg < melhor_erro:
-                    melhor_erro = erro_neg
+                if erro_temp < melhor_erro:
+                    melhor_erro = erro_temp
+                    original_c = indv['cs'][i][j] 
+                    melhorou_c = True
+                else:
+                    indv['cs'][i][j] = original_c 
+            
+            if not melhorou_c:
+                indv['cs'][i][j] = original_c
+
+            original_s = indv['ss'][i][j]
+            melhorou_s = False
+            
+            for _ in range(attempts_per_param):
+                noise = np.random.normal(0, step_size)
+                novo_s = original_s + noise
+                if novo_s < 1e-4: 
+                    novo_s = 1e-4
+                
+                indv['ss'][i][j] = novo_s
+                erro_temp = calc_erro(indv)
+                
+                if erro_temp < melhor_erro:
+                    melhor_erro = erro_temp
+                    original_s = indv['ss'][i][j]
+                    melhorou_s = True
                 else:
                     indv['ss'][i][j] = original_s
+            
+            if not melhorou_s:
+                indv['ss'][i][j] = original_s
 
     indv['fitness'] = melhor_erro
     return indv

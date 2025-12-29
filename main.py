@@ -15,9 +15,9 @@ NEPOCA = 5
 
 # Parâmetros AG / training
 TAM_POP = 50
-NUM_GERACOES = 300       
-TAXA_CRUZA = 0.7
-TAXA_MUTA = 0.2
+NUM_GERACOES = 300
+TAXA_CRUZA = 0.9
+TAXA_MUTA = 0.08
 NFP_MAX = 5
 FILE_XT = 'xt.csv'
 FILE_YT = 'yt.csv'
@@ -197,7 +197,7 @@ for gen in range(NUM_GERACOES):
 
     for z in range(TAM_POP):
         # O step_size define o tamanho do ajuste fino
-        pop[z] = buscalocal.busca_local_antecedentes(
+        pop[z] = buscalocal.busca_local_estocastica(
             pop[z], xt, ydt, p, q, pop[z]['nfps'], step_size=0.01
         )
 
