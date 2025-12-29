@@ -31,7 +31,7 @@ def gerarnovapop(pop, melhorindvidx, tamPop, taxaCruza, taxaMuta, xmax, xmin):
             filho1 = cruzamento.cruzamento(parent1, parent2, int(pontocruza1), int(pontocruza2))
 
             if np.random.rand() < taxaMuta:
-                filho1 = mutacao.mutacao(filho1, xmax, xmin)
+                filho1 = mutacao.mutacao(filho1, pop, xmax, xmin)
             
             nova_pop.append(filho1)
 
@@ -41,7 +41,7 @@ def gerarnovapop(pop, melhorindvidx, tamPop, taxaCruza, taxaMuta, xmax, xmin):
                 
                 if np.random.rand() < taxaMuta:
                 
-                    filho2 = mutacao.mutacao(filho2, xmax, xmin)
+                    filho2 = mutacao.mutacao(filho2, pop, xmax, xmin)
                 
                 nova_pop.append(filho2) 
 
@@ -50,8 +50,8 @@ def gerarnovapop(pop, melhorindvidx, tamPop, taxaCruza, taxaMuta, xmax, xmin):
             # Pega o pai 1 (como referência)
             ind1 = parent1 
             if np.random.rand() < taxaMuta:
-    
-                ind1 = mutacao.mutacao(ind1, xmax, xmin)
+
+                ind1 = mutacao.mutacao(ind1, pop, xmax, xmin)
             
             nova_pop.append(ind1)
 
@@ -61,7 +61,7 @@ def gerarnovapop(pop, melhorindvidx, tamPop, taxaCruza, taxaMuta, xmax, xmin):
                 ind2 = parent2
                 if np.random.rand() < taxaMuta:
                     # Se mutar, 'ind2' recebe o NOVO objeto
-                    ind2 = mutacao.mutacao(ind2, xmax, xmin)
+                    ind2 = mutacao.mutacao(ind2, pop, xmax, xmin)
                 
                 nova_pop.append(ind2)
 

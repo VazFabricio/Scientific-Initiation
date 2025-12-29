@@ -15,7 +15,7 @@ NEPOCA = 5
 
 # Parâmetros AG / training
 TAM_POP = 50
-NUM_GERACOES = 300       
+NUM_GERACOES = 500       
 TAXA_CRUZA = 0.7
 TAXA_MUTA = 0.2
 NFP_MAX = 5
