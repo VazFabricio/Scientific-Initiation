@@ -4,27 +4,22 @@ import matplotlib.pyplot as plt
 from sklearn.metrics import mean_squared_error, r2_score
 import saida
 import gerarnovapop
-import buscalocal
 
 # -------------------------
 # Parâmetros ajustáveis
 # -------------------------
 NFP_INIT = 5
-ALFA = 0.01
+ALFA = 0.01           
 NEPOCA = 5
 
-# Parâmetros AG / training
+# Parâmetros AG
 TAM_POP = 50
-NUM_GERACOES = 300       
-TAXA_CRUZA = 0.7
-TAXA_MUTA = 0.2
+NUM_GERACOES = 5
+TAXA_CRUZA = 0.9
+TAXA_MUTA = 0.08
 NFP_MAX = 5
 FILE_XT = 'xt.csv'
 FILE_YT = 'yt.csv'
-
-# Early stopping
-PATIENCE = 301              # número de gerações sem melhoria para parar
-MIN_DELTA = 0.00005         # melhoria mínima considerada relevante
 
 start_time = time.time()
 
@@ -48,7 +43,7 @@ xt_all = xt_all[indices]
 yt_all = yt_all[indices]
 
 xt = xt_all[:npt_tr, :].copy()       # treino (60%)
-ydt = yt_all[:npt_tr].copy()         # y de treino
+ydt = yt_all[:npt_tr].copy()            # y de treino
 
 xv = xt_all[npt_tr:, :].copy()  # validação (xv)
 ydv = yt_all[npt_tr:].copy()    # y validação (ydv)
@@ -160,16 +155,10 @@ ysv = extract_prediction(saida.saida(xv, c, s, p, q, nfp))
 # Treinamento (laço de gerações + atualização p,q por época)
 # -------------------------
 erro = []
-erro2 = []
 y_train_pred = yst.copy()
-
-# inicializa early stopping
-best_error = (0.5 * np.sum((y_train_pred - ydt) ** 2)) / npt
-no_improve_count = 0
 
 for gen in range(NUM_GERACOES):
     print(f'Geração {gen+1}/{NUM_GERACOES}')
-    # erro antes das atualizações p,q desta geração (apêndice para histórico)
     erro.append((0.5 * np.sum((y_train_pred - ydt) ** 2)) / npt)
     dyjdqj = 1.0
 
@@ -182,24 +171,18 @@ for gen in range(NUM_GERACOES):
             w = np.asarray(ys_full[1]).ravel()
             y_vec = np.asarray(ys_full[2]).ravel()
             b = scalar_of(ys_full[3])
-
+            
             dedys = float(ys) - float(ydt[k])
 
             for j in range(nfp):
                 dysdyj = w[j] / b
                 for i in range(nin):
                     dyjdpj = sample[i]
-                    p[i, j] = p[i, j] - ((ALFA) * dedys * dysdyj * dyjdpj)
-                q[j] = q[j] - ((ALFA) * dedys * dysdyj * dyjdqj)
+                    p[i, j] = p[i, j] - ((ALFA / 10.0) * dedys * dysdyj * dyjdpj)
+                q[j] = q[j] - ((ALFA / 10.0) * dedys * dysdyj * dyjdqj)
 
     # aplicar operador genético para gerar nova população
     pop = gerarnovapop.gerarnovapop(pop, melhorindv, TAM_POP, TAXA_CRUZA, TAXA_MUTA, xmax, xmin)
-
-    for z in range(TAM_POP):
-        # O step_size define o tamanho do ajuste fino
-        pop[z] = buscalocal.busca_local_antecedentes(
-            pop[z], xt, ydt, p, q, pop[z]['nfps'], step_size=0.01
-        )
 
     # re-avaliar fitness da nova população (sempre usando os pesos p,q atuais e dados de treino)
     for z in range(TAM_POP):
@@ -219,30 +202,9 @@ for gen in range(NUM_GERACOES):
 
     # recomputar predição de treino com parâmetros atualizados
     y_train_pred = extract_prediction(saida.saida(xt, c, s, p, q, nfp))
-    current_error = (0.5 * np.sum((y_train_pred - ydt) ** 2)) / npt
-    erro2.append(current_error)
 
-    # -------------------------
-    # Early stopping check
-    # -------------------------
-    # Considera melhoria significativa se a redução for maior que MIN_DELTA
-    if best_error - current_error > MIN_DELTA:
-        best_error = current_error
-        no_improve_count = 0
-        print(f'  Melhora detectada: best_error -> {best_error:.6f} (reset patience)')
-    else:
-        no_improve_count += 1
-        print(f'  Sem melhora significativa ({no_improve_count}/{PATIENCE}) - erro atual: {current_error:.6f}  melhor: {best_error:.6f}')
-
-    if no_improve_count >= PATIENCE:
-        print(f'==> Early stopping acionado na geração {gen+1}. '
-              f'Nenhuma melhora > {MIN_DELTA} por {PATIENCE} gerações. '
-              f'Erro final: {current_error:.6f}')
-        break
-
-# adiciona último erro (mantive sua lógica original para histórico)
+# adiciona último erro
 erro.append((0.5 * np.sum((y_train_pred - ydt) ** 2)) / npt)
-erro2.append((0.5 * np.sum((y_train_pred - ydt) ** 2)) / npt)
 
 # -------------------------
 # Predições finais (com os parâmetros finais)
@@ -295,14 +257,6 @@ plt.plot(erro, 'r', linewidth=1.5)
 plt.xlabel('Geração')
 plt.ylabel('EQM (treino)')
 plt.title('Erro Quadrático Médio por Geração (treino)')
-plt.grid(True)
-
-# Erro por geração
-plt.figure()
-plt.plot(erro2, 'r', linewidth=1.5)
-plt.xlabel('Geração')
-plt.ylabel('EQM (treino)')
-plt.title('Erro Quadrático Médio por Geração (treino) 2')
 plt.grid(True)
 
 # Plots comparativos (treino e validação)
