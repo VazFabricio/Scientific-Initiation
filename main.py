@@ -20,8 +20,8 @@ for exec in range(21):
     TAXA_CRUZA = 0.9
     TAXA_MUTA = 0.08
     NFP_MAX = 5
-    FILE_XT = 'xt_ccp.csv'
-    FILE_YT = 'yt_ccp.csv'
+    FILE_XT = 'xt_yh.csv'
+    FILE_YT = 'yt_yh.csv'
 
     start_time = time.time()
 
