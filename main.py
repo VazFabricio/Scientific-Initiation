@@ -2,10 +2,8 @@ import time
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.metrics import mean_squared_error, r2_score
-from sklearn.neural_network import MLPRegressor
 
-# ====================================================
-# CHAVE DE CONFIGURAÇÃO
+
 # ====================================================
 USAR_NORMALIZACAO = False
 # ====================================================
@@ -13,18 +11,21 @@ USAR_NORMALIZACAO = False
 resultados_rmse = []
 
 for exec in range(21):
+    print(f'exec: {exec}')
+    
     # -------------------------
     # Parâmetros ajustáveis
     # -------------------------
-    ALFA = 0.01    
-    MAX_ITER = 500       
-    FILE_XT = 'xt_MG.csv'
-    FILE_YT = 'yt_MG.csv'
+    NFP_INIT = 5        
+    ALFA = 0.01          
+    NEPOCA = 100         
+    FILE_XT = 'xt_inflow.csv'
+    FILE_YT = 'yt_inflow.csv'
 
     start_time = time.time()
 
     # -------------------------
-    # Carregar dados
+    # Carregar Dados
     # -------------------------
     _raw_X = np.loadtxt(FILE_XT, delimiter=',', skiprows=1)
     xt_all = _raw_X[:, 1:]
@@ -34,87 +35,94 @@ for exec in range(21):
     npt_total, nin = xt_all.shape
     npt_tr = int(round(npt_total * 0.6))
 
+    # Limites reais para cálculo dos centros das Gaussianas
+    x_min_real = xt_all[:npt_tr, :].min(axis=0)
+    x_max_real = xt_all[:npt_tr, :].max(axis=0)
+
     # -------------------------
     # Preparação dos Dados (Com ou Sem Normalização)
     # -------------------------
     if USAR_NORMALIZACAO:
-        # Normaliza Entradas
-        x_min_train = xt_all[:npt_tr, :].min(axis=0)
-        x_max_train = xt_all[:npt_tr, :].max(axis=0)
-        xt_all_norm = (xt_all - x_min_train) / (x_max_train - x_min_train + 1e-10)
-
-        # Normaliza Saídas
-        y_min_train = yt_all[:npt_tr].min()
-        y_max_train = yt_all[:npt_tr].max()
-        yt_all_norm = (yt_all - y_min_train) / (y_max_train - y_min_train + 1e-10)
-
-        # Atribuição normalizada
-        xt = xt_all_norm[:npt_tr, :].copy() 
-        ydt = yt_all_norm[:npt_tr].copy()
-        xv = xt_all_norm[npt_tr:, :].copy()
+        xt = (xt_all[:npt_tr, :] - x_min_real) / (x_max_real - x_min_real + 1e-10)
+        xv = (xt_all[npt_tr:, :] - x_min_real) / (x_max_real - x_min_real + 1e-10)
+        
+        y_min = yt_all[:npt_tr].min()
+        y_max = yt_all[:npt_tr].max()
+        ydt = (yt_all[:npt_tr] - y_min) / (y_max - y_min + 1e-10)
+        
+        # Se normalizou, os centros vão de 0 a 1 para todas as entradas
+        c_min = np.zeros(nin)
+        c_max = np.ones(nin)
     else:
-        # Atribuição bruta (sem normalizar)
-        xt = xt_all[:npt_tr, :].copy()    
-        ydt = yt_all[:npt_tr].copy()     
-        xv = xt_all[npt_tr:, :].copy()  
+        xt = xt_all[:npt_tr, :].copy()
+        xv = xt_all[npt_tr:, :].copy()
+        ydt = yt_all[:npt_tr].copy()
+        
+        # Se não normalizou, os centros acompanham os limites reais de cada entrada
+        c_min = x_min_real
+        c_max = x_max_real
 
-    # Variáveis reais para usar nas métricas finais (nunca mudam)
-    ydt_real = yt_all[:npt_tr].copy()
-    ydv_real = yt_all[npt_tr:].copy()
-
-    # -------------------------
-    # Instanciação e Treinamento do MLP
-    # -------------------------
-    mlp = MLPRegressor(
-        hidden_layer_sizes=(10, 10),
-        activation='relu',          
-        solver='sgd',               
-        learning_rate_init=ALFA,    
-        max_iter=MAX_ITER,          
-        random_state=None           
-    )
-
-    mlp.fit(xt, ydt)
+    ydv_real = yt_all[npt_tr:] # Gabarito real para validação (nunca muda)
 
     # -------------------------
-    # Predições
+    # Inicialização do NFN
     # -------------------------
-    y_train_pred = mlp.predict(xt)
-    y_val_pred = mlp.predict(xv)
+    centros = np.zeros((nin, NFP_INIT))
+    sigmas = np.zeros((nin, 1))
+
+    # Distribuindo as Gaussianas perfeitamente para cada variável
+    for i in range(nin):
+        centros[i, :] = np.linspace(c_min[i], c_max[i], NFP_INIT)
+        sigmas[i, 0] = (c_max[i] - c_min[i]) / (NFP_INIT - 1) + 1e-10
+
+    # Pesos Consequentes (W) inicializados com valores pequenos
+    W = np.random.uniform(-0.1, 0.1, (nin, NFP_INIT))
+
+    def fuzificacao(x_amostra):
+        """Calcula o grau de pertinência (mu) para uma amostra. Adaptativo ao range da variável."""
+        return np.exp(-((x_amostra[:, None] - centros) ** 2) / (2 * sigmas ** 2))
 
     # -------------------------
-    # Desnormalização (se ativada)
+    # Treinamento: Gradiente Descendente do NFN
     # -------------------------
+    for epoca in range(NEPOCA):
+        indices = np.random.permutation(npt_tr)
+        for idx in indices:
+            x_k = xt[idx]
+            y_real = ydt[idx]
+
+            # 1. Forward
+            mu = fuzificacao(x_k)
+            y_pred = np.sum(mu * W)
+
+            # 2. Erro
+            erro_k = y_pred - y_real
+
+            # 3. Backward
+            W = W - ALFA * erro_k * mu
+
+    # -------------------------
+    # Predição e Métricas
+    # -------------------------
+    def predict(X):
+        y_out = []
+        for x_val in X:
+            mu = fuzificacao(x_val)
+            y_out.append(np.sum(mu * W))
+        return np.array(y_out)
+
+    y_val_pred_raw = predict(xv)
+    
     if USAR_NORMALIZACAO:
-        def denorm(y_scaled):
-            return y_scaled * (y_max_train - y_min_train + 1e-10) + y_min_train
-
-        y_train_pred_final = denorm(y_train_pred)
-        y_val_pred_final = denorm(y_val_pred)
+        y_val_pred = y_val_pred_raw * (y_max - y_min + 1e-10) + y_min
     else:
-        # Se não normalizou, as predições já estão na escala final
-        y_train_pred_final = y_train_pred
-        y_val_pred_final = y_val_pred
+        y_val_pred = y_val_pred_raw
 
-    end_time = time.time()
+    rmse_val = np.sqrt(mean_squared_error(ydv_real, y_val_pred))
+    r2_val = r2_score(ydv_real, y_val_pred)
 
-    # -------------------------
-    # Métricas (Escala Real)
-    # -------------------------
-    mse_train = 0.5 * mean_squared_error(ydt_real, y_train_pred_final)
-    rmse_train = np.sqrt(mse_train)
-    r2_train = r2_score(ydt_real, y_train_pred_final)
+    print(f"Validação -> RMSE: {rmse_val:.6f}  R2: {r2_val:.6f}".replace('.', ','))
+    resultados_rmse.append(f"{rmse_val:.6f}".replace('.', ','))
 
-    mse_val = 0.5 * mean_squared_error(ydv_real, y_val_pred_final)
-    rmse_val = np.sqrt(mse_val)
-    r2_val = r2_score(ydv_real, y_val_pred_final)
-
-    texto = f"Validação-> RMSE: {rmse_val:.6f}  R2: {r2_val:.6f}"
-    print(texto.replace('.', ','))
-    print("-" * 40)
-    
-    valor_formatado = f"{rmse_val:.6f}".replace('.', ',')
-    resultados_rmse.append(valor_formatado)
-    
-print("\n--- COPIE A LINHA ABAIXO E COLE NA PRIMEIRA CÉLULA VAZIA DA PLANILHA ---")
+print("\n--- COPIE PARA A PLANILHA ---")
 print("\n".join(resultados_rmse))
