@@ -1,25 +1,23 @@
 import time
 import numpy as np
 import matplotlib.pyplot as plt
+from anfis_toolbox import ANFISRegressor
+from anfis_toolbox.optim import HybridAdamTrainer
 from sklearn.metrics import mean_squared_error, r2_score
-from sklearn.neural_network import MLPRegressor
 
-# ====================================================
-# CHAVE DE CONFIGURAÇÃO
-# ====================================================
+
 USAR_NORMALIZACAO = False
-# ====================================================
 
-resultados_rmse = []
 
-for exec in range(21):
+for exec in range(1):
     # -------------------------
     # Parâmetros ajustáveis
     # -------------------------
-    ALFA = 0.01    
-    MAX_ITER = 500       
-    FILE_XT = 'xt_MG.csv'
-    FILE_YT = 'yt_MG.csv'
+    ALFA = 0.001
+    MAX_ITER = 300
+    MFS = 5
+    FILE_XT = 'xt_inflow.csv'
+    FILE_YT = 'yt_inflow.csv'
 
     start_time = time.time()
 
@@ -49,38 +47,38 @@ for exec in range(21):
         yt_all_norm = (yt_all - y_min_train) / (y_max_train - y_min_train + 1e-10)
 
         # Atribuição normalizada
-        xt = xt_all_norm[:npt_tr, :].copy() 
+        xt = xt_all_norm[:npt_tr, :].copy()
         ydt = yt_all_norm[:npt_tr].copy()
         xv = xt_all_norm[npt_tr:, :].copy()
     else:
         # Atribuição bruta (sem normalizar)
-        xt = xt_all[:npt_tr, :].copy()    
-        ydt = yt_all[:npt_tr].copy()     
-        xv = xt_all[npt_tr:, :].copy()  
+        xt = xt_all[:npt_tr, :].copy()
+        ydt = yt_all[:npt_tr].copy()
+        xv = xt_all[npt_tr:, :].copy()
 
-    # Variáveis reais para usar nas métricas finais (nunca mudam)
+        # Variáveis reais para usar nas métricas finais (nunca mudam)
     ydt_real = yt_all[:npt_tr].copy()
     ydv_real = yt_all[npt_tr:].copy()
 
     # -------------------------
-    # Instanciação e Treinamento do MLP
+    # Instanciação e Treinamento do anfis
     # -------------------------
-    mlp = MLPRegressor(
-        hidden_layer_sizes=(10, 10),
-        activation='relu',          
-        solver='sgd',               
-        learning_rate_init=ALFA,    
-        max_iter=MAX_ITER,          
-        random_state=None           
+    anfis = ANFISRegressor(
+        n_mfs=MFS,
+        mf_type="gaussian",
+        optimizer="hybrid_adam",
+        learning_rate=ALFA,
+        epochs=MAX_ITER,
+        verbose=True
     )
 
-    mlp.fit(xt, ydt)
+    anfis.fit(xt, ydt)
 
     # -------------------------
     # Predições
     # -------------------------
-    y_train_pred = mlp.predict(xt)
-    y_val_pred = mlp.predict(xv)
+    y_train_pred = anfis.predict(xt)
+    y_val_pred = anfis.predict(xv)
 
     # -------------------------
     # Desnormalização (se ativada)
@@ -88,6 +86,7 @@ for exec in range(21):
     if USAR_NORMALIZACAO:
         def denorm(y_scaled):
             return y_scaled * (y_max_train - y_min_train + 1e-10) + y_min_train
+
 
         y_train_pred_final = denorm(y_train_pred)
         y_val_pred_final = denorm(y_val_pred)
@@ -101,9 +100,10 @@ for exec in range(21):
     # -------------------------
     # Métricas (Escala Real)
     # -------------------------
+    from sklearn.metrics import mean_squared_error
+
     mse_train = 0.5 * mean_squared_error(ydt_real, y_train_pred_final)
     rmse_train = np.sqrt(mse_train)
-    r2_train = r2_score(ydt_real, y_train_pred_final)
 
     mse_val = 0.5 * mean_squared_error(ydv_real, y_val_pred_final)
     rmse_val = np.sqrt(mse_val)
@@ -112,9 +112,3 @@ for exec in range(21):
     texto = f"Validação-> RMSE: {rmse_val:.6f}  R2: {r2_val:.6f}"
     print(texto.replace('.', ','))
     print("-" * 40)
-    
-    valor_formatado = f"{rmse_val:.6f}".replace('.', ',')
-    resultados_rmse.append(valor_formatado)
-    
-print("\n--- COPIE A LINHA ABAIXO E COLE NA PRIMEIRA CÉLULA VAZIA DA PLANILHA ---")
-print("\n".join(resultados_rmse))
