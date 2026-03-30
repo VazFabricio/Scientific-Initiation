@@ -19,12 +19,12 @@ NUM_GERACOES = 300
 TAXA_CRUZA = 0.9
 TAXA_MUTA = 0.08
 NFP_MAX = 5
-FILE_XT = 'xt.csv'
-FILE_YT = 'yt.csv'
+FILE_XT = 'xt_CN.csv'
+FILE_YT = 'yt_CN_v.csv'
 
 # Early stopping
-PATIENCE = 301              # número de gerações sem melhoria para parar
-MIN_DELTA = 0.00005         # melhoria mínima considerada relevante
+PATIENCE = 15
+MIN_DELTA = 0.0005
 
 start_time = time.time()
 
@@ -268,8 +268,8 @@ rmse_train = np.sqrt(mse_train)
 r2_train = r2_score(ydt, y_train_pred_final)
 
 print("\n===== MÉTRICAS =====")
-print(f"Treino   -> RMSE: {rmse_train:.6f}  R2: {r2_train:.6f}")
-print(f"Validação-> RMSE: {rmse_val:.6f}  R2: {r2_val:.6f}")
+print(f"Treino   -> RMSE: {f'{rmse_train:.6f}'.replace('.', ',')}  R2: {f'{r2_train:.6f}'.replace('.', ',')}")
+print(f"Validação-> RMSE: {f'{rmse_val:.6f}'.replace('.', ',')}  R2: {f'{r2_val:.6f}'.replace('.', ',')}")
 
 # -------------------------
 # Plots finais: MFs finais, erro por geração, comparativos treino/val
