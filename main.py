@@ -5,9 +5,7 @@ from anfis_toolbox import ANFISRegressor
 from anfis_toolbox.optim import HybridAdamTrainer
 from sklearn.metrics import mean_squared_error, r2_score
 
-
-USAR_NORMALIZACAO = False
-
+USAR_NORMALIZACAO = True
 
 for exec in range(1):
     # -------------------------
@@ -16,8 +14,8 @@ for exec in range(1):
     ALFA = 0.001
     MAX_ITER = 300
     MFS = 5
-    FILE_XT = 'xt_inflow.csv'
-    FILE_YT = 'yt_inflow.csv'
+    FILE_XT = 'xt_MG.csv'
+    FILE_YT = 'yt_MG.csv'
 
     start_time = time.time()
 
