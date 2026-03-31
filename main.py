@@ -7,7 +7,7 @@ from sklearn.neural_network import MLPRegressor
 # ====================================================
 # CHAVE DE CONFIGURAÇÃO
 # ====================================================
-USAR_NORMALIZACAO = False
+USAR_NORMALIZACAO = True
 # ====================================================
 
 resultados_rmse = []
@@ -18,8 +18,8 @@ for exec in range(21):
     # -------------------------
     ALFA = 0.01    
     MAX_ITER = 500       
-    FILE_XT = 'xt_MG.csv'
-    FILE_YT = 'yt_MG.csv'
+    FILE_XT = 'xt_ccp.csv'
+    FILE_YT = 'yt_ccp.csv'
 
     start_time = time.time()
 
@@ -66,8 +66,8 @@ for exec in range(21):
     # Instanciação e Treinamento do MLP
     # -------------------------
     mlp = MLPRegressor(
-        hidden_layer_sizes=(10, 10),
-        activation='relu',          
+        hidden_layer_sizes=(10, 10, 10),
+        activation='tanh',
         solver='sgd',               
         learning_rate_init=ALFA,    
         max_iter=MAX_ITER,          
