@@ -1,8 +1,6 @@
 import time
 import numpy as np
-import matplotlib.pyplot as plt
 from anfis_toolbox import ANFISRegressor
-from anfis_toolbox.optim import HybridAdamTrainer
 from sklearn.metrics import mean_squared_error, r2_score
 
 USAR_NORMALIZACAO = True
@@ -11,13 +9,11 @@ for exec in range(1):
     # -------------------------
     # Parâmetros ajustáveis
     # -------------------------
-    ALFA = 0.001
+    ALFA = 0.01
     MAX_ITER = 300
     MFS = 5
-    FILE_XT = 'xt_MG.csv'
-    FILE_YT = 'yt_MG.csv'
-
-    start_time = time.time()
+    FILE_XT = 'xt_CN.csv'
+    FILE_YT = 'yt_CN_u.csv'
 
     # -------------------------
     # Carregar dados
@@ -26,6 +22,9 @@ for exec in range(1):
     xt_all = _raw_X[:, 1:]
     _raw_y = np.loadtxt(FILE_YT, delimiter=',', skiprows=1)
     yt_all = _raw_y[:, 1:].ravel()
+
+    xt_all = xt_all.astype(np.float32)
+    yt_all = yt_all.astype(np.float32)
 
     npt_total, nin = xt_all.shape
     npt_tr = int(round(npt_total * 0.6))
@@ -92,8 +91,6 @@ for exec in range(1):
         # Se não normalizou, as predições já estão na escala final
         y_train_pred_final = y_train_pred
         y_val_pred_final = y_val_pred
-
-    end_time = time.time()
 
     # -------------------------
     # Métricas (Escala Real)
