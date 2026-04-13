@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="ea3cc5a2-1c45-4e2c-bfdc-582b6a464ff2" name="Changes" comment="New dataset files" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Jupyter Notebook" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$" value="anfis" />
+      </map>
+    </option>
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;VazFabricio&quot;
+  }
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/VazFabricio/Scientific-Initiation.git&quot;,
+    &quot;accountId&quot;: &quot;39cf8d0c-539e-4ca8-bfb7-e63a8a482081&quot;
+  }
+}</component>
+  <component name="McpProjectServerCommands">
+    <commands />
+    <urls />
+  </component>
+  <component name="ProblemsViewState">
+    <option name="selectedTabId" value="CurrentFile" />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 2
+}</component>
+  <component name="ProjectId" id="3AuoGBBHE7lNBSaM8NneekAQMgX" />
+  <component name="ProjectLevelVcsManager">
+    <ConfirmationsSetting value="1" id="Add" />
+  </component>
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+    <option name="sortByType" value="true" />
+    <option name="sortKey" value="BY_TYPE" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "Python.buscalocal.executor": "Run",
+    "Python.cruzamento.executor": "Run",
+    "Python.main.executor": "Run",
+    "RunOnceActivity.MCP Project settings loaded": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "ai.playground.ignore.import.keys.banner.in.settings": "true",
+    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
+    "git-widget-placeholder": "main",
+    "ignore.virus.scanning.warn.message": "true",
+    "junie.onboarding.icon.badge.shown": "true",
+    "last_opened_file_path": "D:/ScientificIni/Scientific-Initiation",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "preferences.general",
+    "settings.editor.splitter.proportion": "0.25472748",
+    "to.speed.mode.migration.done": "true",
+    "vue.rearranger.settings.migration": "true"
+  }
+}]]></component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="D:\ScientificIni\Scientific-Initiation" />
+    </key>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-python-sdk-2653e85de345-6d6dccd035ac-com.jetbrains.pycharm.pro.sharedIndexes.bundled-PY-253.31033.139" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="ea3cc5a2-1c45-4e2c-bfdc-582b6a464ff2" name="Changes" comment="" />
+      <created>1773451718941</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1773451718941</updated>
+      <workItem from="1773451720066" duration="127000" />
+      <workItem from="1773454711658" duration="1101000" />
+      <workItem from="1773518001513" duration="1481000" />
+      <workItem from="1773519526071" duration="296000" />
+      <workItem from="1773519842158" duration="5118000" />
+      <workItem from="1773609513111" duration="5540000" />
+      <workItem from="1773661411126" duration="2922000" />
+      <workItem from="1773664763308" duration="55000" />
+      <workItem from="1773664826612" duration="332000" />
+      <workItem from="1773665178345" duration="6330000" />
+      <workItem from="1774026586151" duration="10208000" />
+      <workItem from="1774140532114" duration="347000" />
+      <workItem from="1774614098462" duration="778000" />
+      <workItem from="1774620200030" duration="1679000" />
+      <workItem from="1774741153594" duration="10899000" />
+      <workItem from="1774788348175" duration="2268000" />
+      <workItem from="1774869605665" duration="25928000" />
+      <workItem from="1774912196977" duration="9337000" />
+      <workItem from="1774957040842" duration="8808000" />
+      <workItem from="1774996250902" duration="4893000" />
+      <workItem from="1775063649143" duration="10425000" />
+      <workItem from="1775090226069" duration="3022000" />
+      <workItem from="1775132879002" duration="315000" />
+      <workItem from="1775136333129" duration="11427000" />
+      <workItem from="1775186760517" duration="2996000" />
+      <workItem from="1775250346575" duration="248000" />
+      <workItem from="1775504807320" duration="5529000" />
+      <workItem from="1775824680776" duration="6039000" />
+      <workItem from="1775872238971" duration="3790000" />
+      <workItem from="1775999476034" duration="1001000" />
+      <workItem from="1776043946556" duration="150000" />
+      <workItem from="1776121473313" duration="374000" />
+    </task>
+    <task id="LOCAL-00001" summary="removed unnecessary files">
+      <option name="closed" value="true" />
+      <created>1775131718330</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1775131718330</updated>
+    </task>
+    <task id="LOCAL-00002" summary="New dataset files">
+      <option name="closed" value="true" />
+      <created>1775132945530</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1775132945530</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State>
+              <option name="FILTERS">
+                <map>
+                  <entry key="branch">
+                    <value>
+                      <list>
+                        <option value="mlp" />
+                      </list>
+                    </value>
+                  </entry>
+                </map>
+              </option>
+            </State>
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="removed unnecessary files" />
+    <MESSAGE value="New dataset files" />
+    <option name="LAST_COMMIT_MESSAGE" value="New dataset files" />
+  </component>
+  <component name="com.intellij.coverage.CoverageDataManagerImpl">
+    <SUITE FILE_PATH="coverage/Scientific_Initiation$cruzamento.coverage" NAME="cruzamento Coverage Results" MODIFIED="1775504980473" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/Scientific_Initiation$buscalocal.coverage" NAME="buscalocal Coverage Results" MODIFIED="1775875577053" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/Scientific_Initiation$main.coverage" NAME="main Coverage Results" MODIFIED="1775999544839" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+  </component>
+</project>
